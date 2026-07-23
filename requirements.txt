@@ -6,3 +6,4 @@ scikit-learn
 alpaca-trade-api
 python-dotenv
 requests
+alpha_vantage==2.3.1
