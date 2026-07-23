@@ -5,8 +5,11 @@ import requests
 import warnings
 import os
 import datetime
+import numpy as np
 from dotenv import load_dotenv
-import alpaca_trade_api as tradeapi
+from alpaca.trading.client import TradingClient
+from alpaca.trading.requests import MarketOrderRequest
+from alpaca.trading.enums import OrderSide, TimeInForce
 
 warnings.filterwarnings('ignore')
 
@@ -27,10 +30,10 @@ if not SECRET_KEY or SECRET_KEY == "VOTRE_CLEF_SECRETE_ICI":
     print("Veuillez coller votre Secret Key dans le fichier .env avant de lancer le robot.")
     exit(1)
 
-api = tradeapi.REST(API_KEY, SECRET_KEY, BASE_URL, api_version='v2')
+client = TradingClient(API_KEY, SECRET_KEY, paper=True)
 
 try:
-    account = api.get_account()
+    account = client.get_account()
     portfolio_value = float(account.portfolio_value)
     print(f"Connexion Alpaca réussie ! Solde du compte : {portfolio_value:.2f} $")
 except Exception as e:
@@ -220,7 +223,7 @@ def execute_live_orders(buy_signals):
     print("\nEtape 3 : Execution des Ordres sur Alpaca...")
     
     # 1. Lister les positions actuelles
-    positions = api.list_positions()
+    positions = client.get_all_positions()
     current_holdings = {pos.symbol: float(pos.qty) for pos in positions}
     
     print(f"Positions actuellement detenues : {list(current_holdings.keys())}")
@@ -231,25 +234,16 @@ def execute_live_orders(buy_signals):
     # 2. Vendre ce qui n'a plus de signal
     for symbol in current_holdings.keys():
         if symbol not in alpaca_buy_signals:
-            print(f"Vente de {symbol} (Fin du signal d'achat)")
-            try:
-                api.submit_order(
-                    symbol=symbol,
-                    qty=current_holdings[symbol],
-                    side='sell',
-                    type='market',
-                    time_in_force='gtc'
-                )
-            except Exception as e:
-                print(f"Erreur lors de la vente de {symbol} : {e}")
-                
+            print(f"Vente de {symbol} (Plus de signal d'achat)")
+            client.close_position(symbol)
+            
     # 3. Acheter les nouveaux signaux
     if len(alpaca_buy_signals) == 0:
         print("Aucun signal d'achat aujourd'hui. L'IA reste en sécurité (Cash).")
         return
         
     # On calcule la taille de la position (Équipondération stricte V6)
-    account = api.get_account()
+    account = client.get_account()
     buying_power = float(account.buying_power)
     # On utilise 95% du buying power pour garder une marge d'erreur
     budget_per_asset = (buying_power * 0.95) / len(alpaca_buy_signals)
@@ -260,33 +254,15 @@ def execute_live_orders(buy_signals):
         if symbol not in current_holdings:
             print(f"Achat de {symbol}")
             try:
-                # Obtenir le prix actuel pour calculer la quantité
-                if '/USD' in symbol:
-                    quote = api.get_latest_crypto_quote(symbol, exchange='CBSE')
-                    current_price = quote.ask_price
-                else:
-                    quote = api.get_latest_trade(symbol)
-                    current_price = quote.price
-                
-                qty = budget_per_asset / current_price
-                
-                # Arrondir la quantité selon le type d'actif (Les actions ne gèrent pas toujours les fractions sur Paper)
-                if '/USD' in symbol:
-                    qty = round(qty, 4) # Les cryptos gèrent les décimales
-                else:
-                    qty = int(qty) # On prend des actions entières pour simplifier
-                    
-                if qty > 0:
-                    api.submit_order(
-                        symbol=symbol,
-                        qty=qty,
-                        side='buy',
-                        type='market',
-                        time_in_force='gtc'
-                    )
-                    print(f" -> Ordre exécuté : {qty} {symbol}")
-                else:
-                    print(f" -> Budget insuffisant pour acheter 1 action de {symbol}")
+                # Ordre Notionnel (Basé sur le budget en $, fractionnel automatique)
+                req = MarketOrderRequest(
+                    symbol=symbol,
+                    notional=budget_per_asset,
+                    side=OrderSide.BUY,
+                    time_in_force=TimeInForce.DAY
+                )
+                client.submit_order(req)
+                print(f" -> Ordre exécuté : {budget_per_asset:.2f} $ de {symbol}")
             except Exception as e:
                 print(f"Erreur lors de l'achat de {symbol} : {e}")
         else:
