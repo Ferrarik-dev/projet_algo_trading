@@ -1,0 +1,33 @@
+name: Robot Trading Quotidien (V6 Pro)
+
+on:
+  schedule:
+    # Exécution du mardi au samedi à 01h45 UTC 
+    # (Correspond à 21h45 Heure de l'Est la veille au soir en été)
+    - cron: '45 1 * * 2-6'
+  workflow_dispatch: # Permet de le lancer manuellement via un bouton sur GitHub
+
+jobs:
+  run-trading-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupérer le code source
+        uses: actions/checkout@v4
+
+      - name: Installer Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip' # Accélère l'installation
+
+      - name: Installer les dépendances
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Exécuter le Robot (live_bot.py)
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+        run: python live_bot.py
