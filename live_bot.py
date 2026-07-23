@@ -247,8 +247,10 @@ def execute_live_orders(buy_signals):
     buying_power = float(account.buying_power)
     # On utilise 95% du buying power pour garder une marge d'erreur
     budget_per_asset = (buying_power * 0.95) / len(alpaca_buy_signals)
+    # Alpaca exige que la valeur notionnelle ait maximum 2 décimales
+    budget_per_asset = round(budget_per_asset, 2)
     
-    print(f"Budget alloué par actif : {budget_per_asset:.2f} $")
+    print(f"Budget alloué par actif : {budget_per_asset} $")
     
     for symbol in alpaca_buy_signals:
         if symbol not in current_holdings:
