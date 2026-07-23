@@ -3,7 +3,6 @@ numpy
 yfinance
 xgboost
 scikit-learn
-alpaca-trade-api
+alpaca-trade-api==3.2.0
 python-dotenv
 requests
-alpha_vantage==2.3.1
