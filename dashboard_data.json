@@ -1,5 +1,5 @@
 {
-    "timestamp": "2026-07-24 16:40:32",
+    "timestamp": "2026-07-24 16:58:39",
     "account": {
         "balance": 0.0,
         "buying_power": 0.0,
@@ -7,103 +7,103 @@
     },
     "market_data": {
         "AAPL": {
-            "price": 333.8349914550781,
-            "change_pct": 3.7850487018454615
+            "price": 332.9150085449219,
+            "change_pct": 3.499037727623544
         },
         "MSFT": {
-            "price": 384.4100036621094,
-            "change_pct": 0.7416576312782475
+            "price": 384.1099853515625,
+            "change_pct": 0.6630323571275021
         },
         "GOOGL": {
-            "price": 319.3999938964844,
-            "change_pct": 0.5382578746378819
+            "price": 319.3500061035156,
+            "change_pct": 0.5225231040802303
         },
         "AMZN": {
-            "price": 233.8249969482422,
-            "change_pct": 0.0706125496648502
+            "price": 233.53050231933594,
+            "change_pct": -0.055422982429076395
         },
         "META": {
-            "price": 602.22998046875,
-            "change_pct": -0.6385077170554698
+            "price": 601.1900024414062,
+            "change_pct": -0.8100929454393446
         },
         "TSLA": {
-            "price": 310.4928894042969,
-            "change_pct": -2.876884784282563
+            "price": 309.6499938964844,
+            "change_pct": -3.140545049344179
         },
         "NVDA": {
-            "price": 210.52000427246094,
-            "change_pct": 0.8430780858098563
+            "price": 210.41000366210938,
+            "change_pct": 0.7903857054467389
         },
         "JPM": {
-            "price": 352.7200012207031,
-            "change_pct": 0.805946662877921
+            "price": 352.8399963378906,
+            "change_pct": 0.8402407809918522
         },
         "V": {
-            "price": 353.9150085449219,
-            "change_pct": 0.6584193405061223
+            "price": 353.55999755859375,
+            "change_pct": 0.557449209628591
         },
         "WMT": {
-            "price": 109.07720184326172,
-            "change_pct": 0.6247235312272004
+            "price": 109.03500366210938,
+            "change_pct": 0.5857953203800115
         },
         "JNJ": {
-            "price": 262.81500244140625,
-            "change_pct": 1.3673057345435558
+            "price": 262.8999938964844,
+            "change_pct": 1.4000867962473906
         },
         "PG": {
-            "price": 146.97000122070312,
-            "change_pct": 0.0
+            "price": 146.92999267578125,
+            "change_pct": -0.027222252561454052
         },
         "MA": {
-            "price": 535.3099975585938,
-            "change_pct": 0.9466555543674815
+            "price": 534.9749755859375,
+            "change_pct": 0.883478427410922
         },
         "HD": {
-            "price": 330.5299987792969,
-            "change_pct": 1.7923708778218916
+            "price": 330.3800048828125,
+            "change_pct": 1.7461776899214465
         },
         "CVX": {
-            "price": 194.77999877929688,
-            "change_pct": 0.1851664508497386
+            "price": 194.69000244140625,
+            "change_pct": 0.13887680022828253
         },
         "MRK": {
-            "price": 131.1898956298828,
-            "change_pct": 0.5440679993783393
+            "price": 131.2550048828125,
+            "change_pct": 0.5939677963292977
         },
         "KO": {
-            "price": 81.91000366210938,
-            "change_pct": 0.9116736600434994
+            "price": 81.94499969482422,
+            "change_pct": 0.9547881524720969
         },
         "PEP": {
-            "price": 135.97999572753906,
-            "change_pct": 0.7632447592361924
+            "price": 136.07000732421875,
+            "change_pct": 0.8299447212333888
         },
         "BAC": {
-            "price": 62.05500030517578,
-            "change_pct": 1.2646891992770914
+            "price": 62.040000915527344,
+            "change_pct": 1.2402123880055127
         },
         "COST": {
-            "price": 932.7100219726562,
-            "change_pct": 0.7180986579265136
+            "price": 932.260009765625,
+            "change_pct": 0.6695043758910391
         }
     },
     "top_picks": [
         {
             "ticker": "GOOGL",
-            "pred_return": 1.0473382311186197,
-            "nlp_score": 0.44616568088531494,
-            "nlp_alert": "FEU VERT: Score Media Positif (0.45).",
+            "pred_return": 1.047338088382366,
+            "nlp_score": 0.1510028600692749,
+            "nlp_alert": "NEUTRE: Score Media (0.15).",
             "headlines": [
-                "OpenAI president Greg Brockman: 'We will remain in this compute shortage no matter what'",
+                "Tech stocks live: Huang, Nadella, and other CEOs defend open-source AI as US threatens crackdown",
                 "AMD CEO Lisa Su on AI demand and hyperscaler spending: 'We're seeing the returns'",
                 "Capex fears trigger biggest Tech sell-off since 'Liberation Day'",
-                "Stock Market Midday, July 24: Blue Chip Stocks Rebound as Oil Prices Plunge",
-                "3 Stocks Primed to Cash In if Artificial Intelligence (AI) Spending Hits $1 Trillion Next Year"
+                "Wall St edges higher as investors juggle earnings, Mideast risks and tariffs",
+                "Is The Stock Market In 'Turtle Mode?' Here's Why Traders Are Ducking For Cover"
             ]
         },
         {
             "ticker": "PEP",
-            "pred_return": 0.834755583937894,
+            "pred_return": 0.8347555779453854,
             "nlp_score": -0.19371217489242554,
             "nlp_alert": "NEUTRE: Score Media (-0.19).",
             "headlines": [
@@ -116,183 +116,165 @@
         },
         {
             "ticker": "TSLA",
-            "pred_return": 0.7041395452822228,
-            "nlp_score": 0.0,
-            "nlp_alert": "NEUTRE: Score Media (0.00).",
+            "pred_return": 0.7041395004866533,
+            "nlp_score": 0.15917142629623413,
+            "nlp_alert": "NEUTRE: Score Media (0.16).",
             "headlines": [
                 "Stock market today: Dow, S&P 500, Nasdaq recover as oil eases, new Trump tariffs take effect",
-                "Elon Musk\u2019s trillion-dollar meltdown: How SpaceX and Tesla erased $700 billion",
-                "2 Growth Stocks with All-Star Potential and 1 We Find Risky",
-                "Cathie Wood Adds $50 Million Of Tesla Stock After 15% Drop",
-                "Waymo Lead Over Tesla Jumps"
+                "If You'd Invested $10,000 in Tesla Stock 10 Years Ago, Here's How Much You'd Have Today",
+                "Wall St edges higher as investors juggle earnings, Mideast risks and tariffs",
+                "Is The Stock Market In 'Turtle Mode?' Here's Why Traders Are Ducking For Cover",
+                "Elon Musk’s trillion-dollar meltdown: How SpaceX and Tesla erased $700 billion"
             ]
         }
     ],
     "full_analysis": [
         {
             "ticker": "GOOGL",
-            "pred_return": 1.0473382311186197,
-            "rsi": 42.24360261921316,
-            "macd": -2.0810238399425884,
-            "volatility": 2.3136379827111826
+            "pred_return": 1.047338088382366,
+            "rsi": 42.243602626546,
+            "macd": -2.081023843309879,
+            "volatility": 2.3136379827111817
         },
         {
             "ticker": "PEP",
-            "pred_return": 0.834755583937894,
-            "rsi": 43.37311563977331,
-            "macd": -1.7996181395540134,
-            "volatility": 1.9993754994363184
+            "pred_return": 0.8347555779453854,
+            "rsi": 43.37311563978905,
+            "macd": -1.79961813954111,
+            "volatility": 1.9993754994363164
         },
         {
             "ticker": "TSLA",
-            "pred_return": 0.7041395452822228,
+            "pred_return": 0.7041395004866533,
             "rsi": 42.62419219803025,
             "macd": -3.64558486345652,
             "volatility": 3.67694133825306
         },
         {
             "ticker": "WMT",
-            "pred_return": 0.6620887763299288,
-            "rsi": 46.44459428863631,
-            "macd": -1.5710530024773988,
-            "volatility": 1.6666586335985611
+            "pred_return": 0.6620886732992723,
+            "rsi": 46.444594288696145,
+            "macd": -1.5710530024764324,
+            "volatility": 1.6666586335985605
         },
         {
             "ticker": "MRK",
-            "pred_return": 0.5785851724851622,
-            "rsi": 58.20842015080674,
-            "macd": 1.8775240848121229,
-            "volatility": 2.1204219658425223
+            "pred_return": 0.5785850872524595,
+            "rsi": 58.20842015072932,
+            "macd": 1.8775240848087265,
+            "volatility": 2.1204219658425276
         },
         {
             "ticker": "MSFT",
-            "pred_return": 0.5360552177720066,
-            "rsi": 51.88615823118781,
-            "macd": -0.9777144097069481,
-            "volatility": 2.376215996020679
+            "pred_return": 0.5360551090401585,
+            "rsi": 51.88615822983797,
+            "macd": -0.9777144111620828,
+            "volatility": 2.3762159960206803
         },
         {
             "ticker": "AMZN",
-            "pred_return": 0.5228804037659425,
+            "pred_return": 0.5228802937132728,
             "rsi": 51.32365303113972,
             "macd": 0.5921148147105839,
             "volatility": 2.1346826269811072
         },
         {
             "ticker": "HD",
-            "pred_return": 0.505205413264166,
-            "rsi": 51.074424041775714,
-            "macd": 3.980355279083369,
-            "volatility": 2.0933889230932445
+            "pred_return": 0.5052053232680848,
+            "rsi": 51.074424039637314,
+            "macd": 3.9803552742338297,
+            "volatility": 2.093388923093246
         },
         {
             "ticker": "CVX",
-            "pred_return": 0.49319405777912384,
-            "rsi": 63.85428757083239,
-            "macd": 0.6446412349332604,
-            "volatility": 1.685995785347608
+            "pred_return": 0.4931938874544421,
+            "rsi": 63.85428757083197,
+            "macd": 0.6446412349331752,
+            "volatility": 1.6859957853476073
         },
         {
             "ticker": "NVDA",
-            "pred_return": 0.44207884279952564,
-            "rsi": 48.22224430514441,
-            "macd": 0.1471530004477586,
-            "volatility": 2.4116602171066925
+            "pred_return": 0.44207876446788075,
+            "rsi": 48.22224430543214,
+            "macd": 0.14715299909335045,
+            "volatility": 2.4116602171066823
         },
         {
             "ticker": "AAPL",
-            "pred_return": 0.4338369239621439,
-            "rsi": 71.65827439149137,
-            "macd": 8.822128012631595,
-            "volatility": 2.2595275094539486
+            "pred_return": 0.4338367271945883,
+            "rsi": 71.65827439136885,
+            "macd": 8.822128013124939,
+            "volatility": 2.259527509453952
         },
         {
             "ticker": "COST",
-            "pred_return": 0.3980680827635368,
-            "rsi": 47.23334533068994,
+            "pred_return": 0.3980678888987046,
+            "rsi": 47.233345330689914,
             "macd": -12.244870044764525,
-            "volatility": 1.6345971592503827
+            "volatility": 1.6345971592503883
         },
         {
             "ticker": "JNJ",
-            "pred_return": 0.3946489023824838,
-            "rsi": 54.50224890639372,
-            "macd": 4.445505112586034,
-            "volatility": 2.036948166202979
+            "pred_return": 0.3946488548909284,
+            "rsi": 54.50224890739395,
+            "macd": 4.445505112338537,
+            "volatility": 2.03694816620298
         },
         {
             "ticker": "BAC",
-            "pred_return": 0.24789826562288683,
-            "rsi": 70.3174709449091,
-            "macd": 1.699513256823174,
-            "volatility": 1.2847139241165468
+            "pred_return": 0.2478982236221156,
+            "rsi": 70.31747094507917,
+            "macd": 1.6995132568275224,
+            "volatility": 1.2847139241165464
         },
         {
             "ticker": "PG",
-            "pred_return": 0.24718927272004676,
-            "rsi": 53.162330171574105,
-            "macd": 0.5290339792039447,
-            "volatility": 1.6225834073187955
+            "pred_return": 0.24718923274102333,
+            "rsi": 53.16233017157687,
+            "macd": 0.529033979203632,
+            "volatility": 1.622583407318797
         },
         {
             "ticker": "KO",
-            "pred_return": 0.2055554264209144,
-            "rsi": 48.57683466465945,
-            "macd": 0.8137210656650069,
-            "volatility": 1.7098832135244035
+            "pred_return": 0.2055554059730894,
+            "rsi": 48.57683466855935,
+            "macd": 0.8137210660616745,
+            "volatility": 1.7098832135244042
         },
         {
             "ticker": "V",
-            "pred_return": 0.14692584512335002,
-            "rsi": 62.32426214399012,
+            "pred_return": 0.14692585686885307,
+            "rsi": 62.324262143990225,
             "macd": 8.351206766918665,
-            "volatility": 1.505313015682639
+            "volatility": 1.505313015682637
         },
         {
             "ticker": "JPM",
-            "pred_return": 0.13239893554618923,
-            "rsi": 60.931199863610146,
-            "macd": 7.020164052491964,
-            "volatility": 1.3953428011727478
+            "pred_return": 0.13239894555356224,
+            "rsi": 60.93119986409233,
+            "macd": 7.0201640523617925,
+            "volatility": 1.3953428011727493
         },
         {
             "ticker": "META",
-            "pred_return": 0.10146762390059978,
-            "rsi": 56.82198685717666,
-            "macd": 19.348630984754436,
-            "volatility": 3.5703866669207227
+            "pred_return": 0.10146778193077877,
+            "rsi": 56.821986857196976,
+            "macd": 19.348630984744773,
+            "volatility": 3.5703866669207294
         },
         {
             "ticker": "MA",
-            "pred_return": -0.11761797398912492,
-            "rsi": 64.11591984645372,
-            "macd": 12.637089770186776,
-            "volatility": 1.5968017473115568
+            "pred_return": -0.11761807109898831,
+            "rsi": 64.11591995667945,
+            "macd": 12.6370897935235,
+            "volatility": 1.5968017473115577
         }
     ],
     "performance": {
-        "timestamps": [
-            "2026-06-24",
-            "2026-07-01",
-            "2026-07-08",
-            "2026-07-15",
-            "2026-07-24"
-        ],
-        "bot_equity": [
-            100,
-            102.5,
-            101.8,
-            104.2,
-            105.1
-        ],
-        "spy_equity": [
-            100,
-            101.1,
-            100.5,
-            101.9,
-            102.3
-        ],
-        "bot_return_pct": 5.1,
-        "spy_return_pct": 2.3
+        "timestamps": [],
+        "bot_equity": [],
+        "spy_equity": [],
+        "bot_return_pct": 0.0,
+        "spy_return_pct": 0.0
     }
 }
