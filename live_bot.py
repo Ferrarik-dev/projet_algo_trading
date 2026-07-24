@@ -209,11 +209,20 @@ def generate_todays_signals(data_dict):
                 
             print(f"[{ticker}] Probabilité de Hausse: {prob_today*100:.1f}% | Régime OK: {regime_ok}")
             
+            rsi = df_today['RSI_14'].values[0] if 'RSI_14' in df_today.columns else 50.0
+            macd = df_today['MACD'].values[0] if 'MACD' in df_today.columns else 0.0
+            sma_50 = df_today['SMA_50'].values[0] if 'SMA_50' in df_today.columns else df_today['Close'].values[0]
+            price = df_today['Close'].values[0]
+            sma_dist = ((price - sma_50) / sma_50 * 100) if sma_50 > 0 else 0.0
+            
             all_predictions.append({
                 'ticker': ticker,
                 'probability': float(prob_today),
                 'regime_ok': bool(regime_ok),
-                'sector': sector_name
+                'sector': sector_name,
+                'rsi': float(rsi),
+                'macd': float(macd),
+                'sma_dist': float(sma_dist)
             })
             
             if prob_today > 0.60 and regime_ok:

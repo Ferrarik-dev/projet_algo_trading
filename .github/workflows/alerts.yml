@@ -1,0 +1,31 @@
+name: Alertes Live (Crash/Pump)
+
+on:
+  schedule:
+    # Toutes les heures du lundi au vendredi
+    # De 14:00 UTC a 20:00 UTC (ce qui couvre de 10:00 EDT a 16:00 EDT)
+    - cron: '0 14-20 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  run-alerts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Installer les dependances
+        run: |
+          python -m pip install --upgrade pip
+          pip install yfinance requests python-dotenv pandas
+
+      - name: Lancer le scanner d'alertes
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python live_alerts.py
