@@ -5,258 +5,363 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0a0e17">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
-    <title>V7 PRO Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+    <title>V7 PRO - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg-dark: #0a0e17;
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --accent: #00f0ff;
-            --text-main: #ffffff;
-            --text-muted: #8b9bb4;
-            --up-color: #00e676;
-            --down-color: #ff3d00;
+            --bg: #050505; --card: #111; --border: #333;
+            --accent: #00f0ff; --accent-glow: rgba(0,240,255,0.2);
+            --up: #00e676; --down: #ff3d00; --text: #fff; --text-muted: #888;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
-        body { background-color: var(--bg-dark); color: var(--text-main); padding: 20px; overflow-x: hidden; }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Outfit',sans-serif; }
+        body { background:var(--bg); color:var(--text); padding-bottom: 80px; }
         
-        .header { text-align: center; margin-bottom: 30px; animation: fadeInDown 0.8s ease; margin-top: 10px;}
-        .header h1 { font-size: 28px; font-weight: 700; background: linear-gradient(90deg, #fff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header { padding: 20px; text-align: center; border-bottom: 1px solid var(--border); background: #000; position: sticky; top:0; z-index:10; }
+        .header h1 { font-size: 24px; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
+
+        .container { padding: 15px; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
         
-        .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            animation: fadeInUp 0.8s ease;
-        }
+        /* Stats */
+        .val-lg { font-size: 36px; font-weight: 700; margin: 5px 0; }
+        .val-sm { font-size: 16px; font-weight: 600; }
+        .color-up { color: var(--up); }
+        .color-down { color: var(--down); }
 
-        .balance-title { color: var(--text-muted); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
-        .balance-value { font-size: 42px; font-weight: 700; margin: 5px 0; }
-        .profit { font-size: 16px; font-weight: 500; }
-        .profit.up { color: var(--up-color); }
-        .profit.down { color: var(--down-color); }
-
-        .chart-container { position: relative; height: 250px; width: 100%; }
-
-        .positions-title { font-size: 18px; margin-bottom: 15px; font-weight: 500; }
-        .position-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 12px 0; border-bottom: 1px solid var(--glass-border);
-        }
-        .position-item:last-child { border-bottom: none; padding-bottom: 0; }
-        .ticker { font-size: 18px; font-weight: 700; }
-        .qty { color: var(--text-muted); font-size: 14px; }
-        .pos-value { font-size: 16px; font-weight: 500; text-align: right;}
-
-        .setup-screen { display: flex; flex-direction: column; gap: 15px; }
-        input { 
-            width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border);
-            background: rgba(0,0,0,0.2); color: white; outline: none; font-size: 16px;
-        }
-        button {
-            background: var(--accent); color: #000; font-weight: 700; font-size: 16px;
-            padding: 15px; border: none; border-radius: 12px; cursor: pointer;
-            transition: transform 0.2s;
-        }
-        button:active { transform: scale(0.95); }
-
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        /* Chart */
+        .main-chart { height: 220px; width: 100%; position: relative; }
         
-        #dashboard { display: none; }
+        /* Lists */
+        .list-header { font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+        .item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+        .item:last-child { border: none; }
+        .item-left { display: flex; flex-direction: column; }
+        .item-ticker { font-size: 18px; font-weight: 700; }
+        .item-sub { font-size: 12px; color: var(--text-muted); }
+        .item-right { text-align: right; }
+        
+        /* Sparklines */
+        .sparkline-container { width: 80px; height: 30px; margin: 0 10px; }
+
+        /* AI Prob Bar */
+        .prob-bar-bg { width: 100px; height: 6px; background: #333; border-radius: 3px; overflow: hidden; margin-top: 5px; }
+        .prob-bar-fill { height: 100%; background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
+        .prob-high { background: var(--up); box-shadow: 0 0 8px var(--up); }
+        
+        /* Badges */
+        .badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-top:4px;}
+        .badge-ok { background: rgba(0,230,118,0.2); color: var(--up); border: 1px solid var(--up); }
+        .badge-no { background: rgba(255,61,0,0.2); color: var(--down); border: 1px solid var(--down); }
+
+        /* Tabs Navigation */
+        .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #000; border-top: 1px solid var(--border); display: flex; padding: 15px 10px; padding-bottom: max(15px, env(safe-area-inset-bottom)); z-index:100; }
+        .tab-btn { flex: 1; text-align: center; color: var(--text-muted); font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: 0.2s; cursor: pointer; }
+        .tab-btn.active { color: var(--accent); }
+        .tab-icon { font-size: 20px; }
+        
+        .tab-content { display: none; animation: fade 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fade { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        
+        /* Setup */
+        #setup { display: flex; flex-direction: column; gap: 15px; max-width: 400px; margin: 40px auto; }
+        input, button { padding: 15px; border-radius: 12px; font-size: 16px; border: 1px solid var(--border); outline: none; }
+        input { background: #111; color: white; }
+        button { background: var(--accent); color: #000; font-weight: 700; cursor: pointer; border:none; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>V7 PRO</h1>
-    </div>
 
-    <!-- Écran de configuration (S'affiche si pas de clés) -->
-    <div id="setup" class="glass-card setup-screen">
-        <h2 style="margin-bottom: 10px;">Connexion Alpaca</h2>
-        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 10px;">Entrez vos clés Paper Trading. Elles resteront stockées localement sur votre téléphone (100% sécurisé).</p>
-        <input type="text" id="apiKey" placeholder="API Key (ex: PK...)">
+    <!-- Setup -->
+    <div id="setup" class="container">
+        <h2>Connexion Alpaca</h2>
+        <p style="color:var(--text-muted); font-size:14px;">Clés 100% locales et sécurisées.</p>
+        <input type="text" id="apiKey" placeholder="API Key (PK...)">
         <input type="password" id="secretKey" placeholder="Secret Key">
-        <button onclick="saveKeys()">Se Connecter</button>
+        <button onclick="saveKeys()">Lancer V7 PRO</button>
     </div>
 
-    <!-- Tableau de bord -->
-    <div id="dashboard">
-        <div class="glass-card">
-            <div class="balance-title">Solde Total</div>
-            <div class="balance-value" id="balanceValue">$--.--</div>
-            <div class="profit" id="profitValue">Chargement...</div>
+    <!-- Main App -->
+    <div id="app" style="display:none;">
+        <div class="header">
+            <h1>V7 PRO ALGO</h1>
         </div>
 
-        <div class="glass-card">
-            <div class="chart-container">
-                <canvas id="equityChart"></canvas>
+        <div class="container">
+            <!-- TAB 1: PORTFOLIO -->
+            <div id="tab-portfolio" class="tab-content active">
+                <div class="card">
+                    <div style="color:var(--text-muted); font-size:12px; text-transform:uppercase;">Solde Compte</div>
+                    <div class="val-lg" id="port-val">$--.--</div>
+                    <div class="val-sm" id="port-diff">--</div>
+                </div>
+                <div class="card">
+                    <div class="main-chart"><canvas id="mainChart"></canvas></div>
+                </div>
+                <div class="card">
+                    <div class="list-header">Positions Actuelles (<span id="pos-count">0</span>)</div>
+                    <div id="positions-list"></div>
+                </div>
+                <button onclick="logout()" style="width:100%; background:transparent; color:var(--down); border:1px solid var(--down);">Déconnexion</button>
+            </div>
+
+            <!-- TAB 2: AI UNIVERSE -->
+            <div id="tab-ai" class="tab-content">
+                <div class="card">
+                    <div style="font-size:20px; font-weight:700; margin-bottom:5px;">🧠 Cerveau IA</div>
+                    <div style="font-size:12px; color:var(--text-muted); margin-bottom:15px;">Dernière analyse : <span id="ai-date">--</span></div>
+                    <div class="list-header">Univers Surveillé & Probabilités</div>
+                    <div id="ai-list">
+                        <div style="text-align:center; padding:20px; color:var(--text-muted);">Chargement de dashboard_data.json...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: ACTIVITY -->
+            <div id="tab-activity" class="tab-content">
+                <div class="card">
+                    <div class="list-header">Derniers Trades Exécutés</div>
+                    <div id="activity-list"></div>
+                </div>
             </div>
         </div>
 
-        <div class="glass-card">
-            <div class="positions-title">Top-5 Actuel</div>
-            <div id="positionsList">
-                <!-- Les positions seront injectées ici -->
+        <!-- Navigation -->
+        <div class="tab-bar">
+            <div class="tab-btn active" onclick="switchTab('portfolio', this)">
+                <span class="tab-icon">💼</span>
+                <span>Portefeuille</span>
+            </div>
+            <div class="tab-btn" onclick="switchTab('ai', this)">
+                <span class="tab-icon">🧠</span>
+                <span>Univers IA</span>
+            </div>
+            <div class="tab-btn" onclick="switchTab('activity', this)">
+                <span class="tab-icon">📜</span>
+                <span>Historique</span>
             </div>
         </div>
-        
-        <button onclick="logout()" style="background: transparent; border: 1px solid var(--glass-border); color: var(--text-muted); width: 100%; margin-top: 10px;">Déconnexion</button>
     </div>
 
     <script>
         const BASE_URL = 'https://paper-api.alpaca.markets';
-        let chartInstance = null;
+        let mainChartInst = null;
+        let aiDataCache = null;
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            btn.classList.add('active');
+            
+            if(tabId === 'ai' && !aiDataCache) loadAITab();
+            if(tabId === 'activity') loadActivityTab();
+        }
 
         function checkAuth() {
             if (localStorage.getItem('alpacaKey') && localStorage.getItem('alpacaSecret')) {
                 document.getElementById('setup').style.display = 'none';
-                document.getElementById('dashboard').style.display = 'block';
-                loadData();
+                document.getElementById('app').style.display = 'block';
+                loadPortfolioTab();
             } else {
                 document.getElementById('setup').style.display = 'flex';
-                document.getElementById('dashboard').style.display = 'none';
+                document.getElementById('app').style.display = 'none';
             }
         }
 
         function saveKeys() {
-            const key = document.getElementById('apiKey').value.trim();
-            const secret = document.getElementById('secretKey').value.trim();
-            if (key && secret) {
-                localStorage.setItem('alpacaKey', key);
-                localStorage.setItem('alpacaSecret', secret);
-                checkAuth();
-            }
+            const k = document.getElementById('apiKey').value.trim();
+            const s = document.getElementById('secretKey').value.trim();
+            if (k && s) { localStorage.setItem('alpacaKey', k); localStorage.setItem('alpacaSecret', s); checkAuth(); }
         }
 
         function logout() {
-            localStorage.removeItem('alpacaKey');
-            localStorage.removeItem('alpacaSecret');
-            checkAuth();
+            localStorage.removeItem('alpacaKey'); localStorage.removeItem('alpacaSecret'); checkAuth();
         }
 
         async function alpacaFetch(endpoint) {
-            const key = localStorage.getItem('alpacaKey');
-            const secret = localStorage.getItem('alpacaSecret');
-            const response = await fetch(`${BASE_URL}${endpoint}`, {
-                headers: {
-                    'APCA-API-KEY-ID': key,
-                    'APCA-API-SECRET-KEY': secret
-                }
-            });
-            if (!response.ok) {
-                if(response.status === 401) { logout(); alert("Clés invalides !"); }
-                throw new Error("Erreur API");
-            }
-            return response.json();
+            const k = localStorage.getItem('alpacaKey'), s = localStorage.getItem('alpacaSecret');
+            const res = await fetch(`${BASE_URL}${endpoint}`, { headers: { 'APCA-API-KEY-ID': k, 'APCA-API-SECRET-KEY': s } });
+            if (!res.ok) { if(res.status === 401) { logout(); alert("Clés invalides !"); } throw new Error("API Error"); }
+            return res.json();
         }
 
-        async function loadData() {
+        // ================= PORTFOLIO TAB =================
+        async function loadPortfolioTab() {
             try {
-                // 1. Account Info
-                const account = await alpacaFetch('/v2/account');
-                const eq = parseFloat(account.equity);
-                const liq = parseFloat(account.last_equity);
-                const diff = eq - liq;
-                const pct = (diff / liq) * 100;
-                
-                document.getElementById('balanceValue').innerText = `$${eq.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
-                
-                const pDiv = document.getElementById('profitValue');
-                pDiv.innerText = `${diff >= 0 ? '+' : ''}$${Math.abs(diff).toFixed(2)} (${diff >= 0 ? '+' : ''}${pct.toFixed(2)}%) Aujourd'hui`;
-                pDiv.className = `profit ${diff >= 0 ? 'up' : 'down'}`;
+                const acc = await alpacaFetch('/v2/account');
+                const eq = parseFloat(acc.equity), leq = parseFloat(acc.last_equity);
+                const diff = eq - leq, pct = (diff/leq)*100;
+                document.getElementById('port-val').innerText = `$${eq.toLocaleString('en-US',{minimumFractionDigits:2})}`;
+                const diffEl = document.getElementById('port-diff');
+                diffEl.innerText = `${diff>=0?'+':''}$${Math.abs(diff).toFixed(2)} (${diff>=0?'+':''}${pct.toFixed(2)}%)`;
+                diffEl.className = `val-sm ${diff>=0?'color-up':'color-down'}`;
 
-                // 2. Positions
+                const hist = await alpacaFetch('/v2/account/portfolio/history?period=1M&timeframe=1D');
+                drawMainChart(hist.timestamp, hist.equity);
+
                 const positions = await alpacaFetch('/v2/positions');
-                const list = document.getElementById('positionsList');
-                list.innerHTML = '';
-                if (positions.length === 0) {
-                    list.innerHTML = '<div class="qty">Aucune position (Full Cash)</div>';
-                } else {
-                    positions.forEach(p => {
-                        const val = parseFloat(p.market_value);
-                        const plPct = parseFloat(p.unrealized_intraday_plpc) * 100;
-                        list.innerHTML += `
-                            <div class="position-item">
-                                <div>
-                                    <div class="ticker">${p.symbol}</div>
-                                    <div class="qty">${parseFloat(p.qty).toFixed(4)} parts</div>
-                                </div>
-                                <div class="pos-value">
-                                    <div>$${val.toFixed(2)}</div>
-                                    <div class="${plPct >= 0 ? 'up' : 'down'}" style="font-size:12px; font-weight:700;">${plPct >= 0 ? '+' : ''}${plPct.toFixed(2)}%</div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                }
-
-                // 3. Chart History
-                const history = await alpacaFetch('/v2/account/portfolio/history?period=1M&timeframe=1D');
-                drawChart(history.timestamp, history.equity);
+                document.getElementById('pos-count').innerText = positions.length;
+                const posList = document.getElementById('positions-list');
+                posList.innerHTML = '';
+                if(positions.length === 0) posList.innerHTML = '<div style="color:var(--text-muted); font-size:14px;">Full Cash (Sécurité)</div>';
                 
-            } catch (e) {
-                console.error(e);
-            }
+                for(let p of positions) {
+                    const pl = parseFloat(p.unrealized_intraday_plpc)*100;
+                    const val = parseFloat(p.market_value);
+                    const id = `spark-${p.symbol.replace('/','-')}`;
+                    posList.innerHTML += `
+                        <div class="item">
+                            <div class="item-left" style="width:70px;">
+                                <span class="item-ticker">${p.symbol}</span>
+                                <span class="item-sub">${parseFloat(p.qty).toFixed(2)} parts</span>
+                            </div>
+                            <div class="sparkline-container"><canvas id="${id}"></canvas></div>
+                            <div class="item-right">
+                                <span class="val-sm">$${val.toFixed(2)}</span><br>
+                                <span class="item-sub ${pl>=0?'color-up':'color-down'}">${pl>=0?'+':''}${pl.toFixed(2)}%</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Fetch sparklines data in background
+                for(let p of positions) {
+                    fetchAndDrawSparkline(p.symbol, `spark-${p.symbol.replace('/','-')}`);
+                }
+            } catch(e) { console.error(e); }
         }
 
-        function drawChart(timestamps, equity) {
-            const ctx = document.getElementById('equityChart').getContext('2d');
-            const labels = timestamps.map(t => {
-                const d = new Date(t * 1000);
-                return `${d.getDate()}/${d.getMonth()+1}`;
+        function drawMainChart(times, equity) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if(mainChartInst) mainChartInst.destroy();
+            let grad = ctx.createLinearGradient(0,0,0,220);
+            grad.addColorStop(0, 'rgba(0, 240, 255, 0.4)'); grad.addColorStop(1, 'rgba(0, 240, 255, 0.0)');
+            mainChartInst = new Chart(ctx, {
+                type:'line',
+                data:{ labels:times, datasets:[{ data:equity, borderColor:'#00f0ff', backgroundColor:grad, fill:true, borderWidth:2, pointRadius:0, tension:0.3 }] },
+                options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{display:false},y:{display:false}} }
             });
-            
-            if (chartInstance) chartInstance.destroy();
-            
-            // Gradient fill
-            let gradient = ctx.createLinearGradient(0, 0, 0, 250);
-            gradient.addColorStop(0, 'rgba(0, 240, 255, 0.4)');
-            gradient.addColorStop(1, 'rgba(0, 240, 255, 0.0)');
+        }
 
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Portfolio',
-                        data: equity,
-                        borderColor: '#00f0ff',
-                        backgroundColor: gradient,
-                        borderWidth: 3,
-                        fill: true,
-                        pointRadius: 0,
-                        pointHoverRadius: 6,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: { 
-                        legend: { display: false },
-                        tooltip: { backgroundColor: '#0a0e17', titleColor: '#8b9bb4', bodyColor: '#fff', borderColor: '#00f0ff', borderWidth: 1 }
-                    },
-                    scales: {
-                        x: { display: false },
-                        y: { display: false, min: Math.min(...equity) * 0.99, max: Math.max(...equity) * 1.01 }
+        // ================= AI UNIVERSE TAB =================
+        async function loadAITab() {
+            try {
+                // Anti-cache
+                const res = await fetch('../dashboard_data.json?t=' + new Date().getTime());
+                if(!res.ok) {
+                    document.getElementById('ai-list').innerHTML = '<div style="color:var(--down); font-size:14px; text-align:center; margin-top:20px;">Le fichier dashboard_data.json est introuvable.<br><br><b>Patientez :</b> Il sera généré et poussé sur GitHub automatiquement lors du prochain trade ce soir.</div>';
+                    return;
+                }
+                const data = await res.json();
+                aiDataCache = data;
+                document.getElementById('ai-date').innerText = data.date;
+                
+                let preds = data.predictions.sort((a,b) => b.probability - a.probability);
+                const list = document.getElementById('ai-list');
+                list.innerHTML = '';
+                
+                for(let p of preds) {
+                    const prob = p.probability * 100;
+                    const id = `ai-spark-${p.ticker.replace('/','-')}`;
+                    const barClass = prob >= 60 ? 'prob-high' : '';
+                    const isTop5 = (preds.indexOf(p) < 5) && p.regime_ok && prob >= 60;
+                    
+                    list.innerHTML += `
+                        <div class="item" style="${isTop5 ? 'background:rgba(0,240,255,0.05); padding-left:10px; border-left:3px solid var(--accent);' : ''}">
+                            <div class="item-left" style="width:70px;">
+                                <span class="item-ticker">${p.ticker}</span>
+                                <span class="badge ${p.regime_ok ? 'badge-ok' : 'badge-no'}">${p.regime_ok ? 'Trend OK' : 'Bearish'}</span>
+                            </div>
+                            <div class="sparkline-container"><canvas id="${id}"></canvas></div>
+                            <div class="item-right" style="width:100px;">
+                                <span class="val-sm">${prob.toFixed(1)}%</span>
+                                <div class="prob-bar-bg"><div class="prob-bar-fill ${barClass}" style="width:${prob}%"></div></div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                for(let p of preds) {
+                    fetchAndDrawSparkline(p.ticker, `ai-spark-${p.ticker.replace('/','-')}`);
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        // ================= ACTIVITY TAB =================
+        async function loadActivityTab() {
+            try {
+                const acts = await alpacaFetch('/v2/account/activities/FILL');
+                const list = document.getElementById('activity-list');
+                list.innerHTML = '';
+                if(acts.length === 0) list.innerHTML = '<div style="color:var(--text-muted);text-align:center;">Aucune activité.</div>';
+                
+                acts.slice(0, 30).forEach(a => {
+                    const isBuy = a.side === 'buy';
+                    const date = new Date(a.transaction_time).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+                    list.innerHTML += `
+                        <div class="item">
+                            <div class="item-left">
+                                <span class="item-ticker"><span style="font-size:12px;">${isBuy ? '🟢' : '🔴'}</span> ${a.symbol}</span>
+                                <span class="item-sub">${date}</span>
+                            </div>
+                            <div class="item-right">
+                                <span class="val-sm">$${parseFloat(a.price).toFixed(2)}</span><br>
+                                <span class="item-sub">${a.qty} parts</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        // ================= SPARKLINE HELPER =================
+        const sparkCache = {};
+        async function fetchAndDrawSparkline(symbol, canvasId) {
+            if(!document.getElementById(canvasId)) return;
+            try {
+                let prices = [];
+                let color = '#888';
+                
+                if(sparkCache[symbol]) {
+                    prices = sparkCache[symbol].prices;
+                    color = sparkCache[symbol].color;
+                } else {
+                    const isCrypto = symbol.includes('/');
+                    let url = '';
+                    let today = new Date();
+                    let lastMonth = new Date(); lastMonth.setDate(today.getDate() - 30);
+                    const end = today.toISOString();
+                    const start = lastMonth.toISOString();
+                    
+                    if(!isCrypto) {
+                        url = `/v2/stocks/bars?symbols=${symbol}&timeframe=1Day&start=${start}&end=${end}&limit=30`;
+                        const res = await alpacaFetch(url);
+                        if(res.bars && res.bars[symbol]) {
+                            prices = res.bars[symbol].map(b => b.c);
+                        }
+                    } else {
+                        // Dummy crypto flatline si API différente, pour garder l'interface propre
+                        prices = [1, 1.1, 1.05, 1.2, 1.15]; 
+                    }
+                    
+                    if(prices.length > 1) {
+                        color = prices[prices.length-1] >= prices[0] ? '#00e676' : '#ff3d00';
+                        sparkCache[symbol] = {prices, color};
                     }
                 }
-            });
+                
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                new Chart(ctx, {
+                    type:'line',
+                    data:{ labels:prices, datasets:[{ data:prices, borderColor:color, borderWidth:1.5, pointRadius:0, tension:0.1 }] },
+                    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{enabled:false}}, scales:{x:{display:false},y:{display:false}} }
+                });
+            } catch(e) { console.log("Sparkline error for", symbol); }
         }
 
         checkAuth();
-        // Rafraichir toutes les 3 minutes
-        setInterval(() => { if (localStorage.getItem('alpacaKey')) loadData(); }, 180000);
     </script>
 </body>
 </html>

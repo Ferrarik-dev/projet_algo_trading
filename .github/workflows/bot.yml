@@ -10,6 +10,8 @@ on:
 jobs:
   run-trading-bot:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Récupérer le code source
@@ -33,3 +35,11 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python live_bot.py
+
+      - name: Sauvegarder les predictions
+        run: |
+          git config --global user.name "V7 PRO Bot"
+          git config --global user.email "bot@v7pro.com"
+          git add dashboard_data.json
+          git commit -m "🤖 Mise à jour automatique des prédictions" || echo "Pas de changement"
+          git push

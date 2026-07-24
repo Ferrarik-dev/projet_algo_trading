@@ -159,8 +159,9 @@ def prepare_asset_features(df_asset, sector_name, series_sector_bench, series_gl
     return df
 
 def generate_todays_signals(data_dict):
-    print("\nEtape 2 : Entrainement des IA et Prediction pour Aujourd'hui...")
+    print("\nEtape 2 : Generation des Signaux (Prediction Machine Learning)...")
     scored_signals = []
+    all_predictions = []
     
     for sector_name, info in SECTORS.items():
         series_sector = data_dict[sector_name]['benchmark']
@@ -208,6 +209,13 @@ def generate_todays_signals(data_dict):
                 
             print(f"[{ticker}] Probabilité de Hausse: {prob_today*100:.1f}% | Régime OK: {regime_ok}")
             
+            all_predictions.append({
+                'ticker': ticker,
+                'probability': float(prob_today),
+                'regime_ok': bool(regime_ok),
+                'sector': sector_name
+            })
+            
             if prob_today > 0.60 and regime_ok:
                 scored_signals.append((ticker, prob_today))
                 
@@ -218,6 +226,19 @@ def generate_todays_signals(data_dict):
     print(f"\n--- TOP-5 DU JOUR (V7 PRO) ---")
     for i, item in enumerate(scored_signals[:5]):
         print(f"{i+1}. {item[0]} ({item[1]*100:.1f}%)")
+        
+    import json
+    from datetime import datetime
+    try:
+        export_data = {
+            'date': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'predictions': all_predictions
+        }
+        with open('dashboard_data.json', 'w') as f:
+            json.dump(export_data, f, indent=4)
+        print("Export des predictions dans dashboard_data.json reussi.")
+    except Exception as e:
+        print(f"Erreur export JSON : {e}")
         
     return top_5
 
