@@ -11,6 +11,7 @@ from alpaca.trading.requests import MarketOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
 import warnings
 import json
+import requests
 
 load_dotenv()
 try:
@@ -28,6 +29,19 @@ UNIVERSE = [
 ]
 TOP_N = 3 # On garde le Top 3 qui est le plus performant
 HORIZON_DAYS = 5
+
+def send_telegram_message(message):
+    token = os.getenv('TELEGRAM_BOT_TOKEN')
+    chat_id = os.getenv('TELEGRAM_CHAT_ID')
+    if not token or not chat_id:
+        print("Identifiants Telegram manquants dans l'environnement.")
+        return
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {"chat_id": chat_id, "text": message}
+    try:
+        requests.post(url, json=payload)
+    except Exception as e:
+        print(f"Erreur d'envoi Telegram : {e}")
 
 def prepare_features(df_raw):
     df = df_raw.copy()
@@ -142,7 +156,7 @@ def generate_todays_signals():
         print("Aucun signal d'achat interessant aujourd'hui.")
     else:
         print("\n--- MESSAGE TELEGRAM DE SYNTHESE ---")
-        print("[LIGHTGBM] Top 3 Actions selectionnees :")
+        telegram_msg = "🤖 [QuantBot Premium] - Rapport du Jour\n\n"
         for rank, (ticker, pred) in enumerate(top_picks, 1):
             
             # NLP Scoring
@@ -174,8 +188,9 @@ def generate_todays_signals():
             else:
                 nlp_alert = f"NEUTRE: Score Media ({avg_score:.2f})."
                 
-            print(f"#{rank} {ticker} (Rendement 5J prevu : +{pred*100:.2f}%)")
-            print(f"   -> NLP Opinion: {nlp_alert}")
+            line_str = f"#{rank} {ticker} (Rendement 5J prevu : +{pred*100:.2f}%)\n   -> NLP Opinion: {nlp_alert}"
+            print(line_str)
+            telegram_msg += line_str + "\n\n"
             
             top_picks_dashboard.append({
                 'ticker': ticker,
@@ -184,6 +199,8 @@ def generate_todays_signals():
                 'nlp_alert': nlp_alert,
                 'headlines': headlines
             })
+            
+        send_telegram_message(telegram_msg)
             
     print("-" * 45)
     return top_picks, dashboard_market, top_picks_dashboard
