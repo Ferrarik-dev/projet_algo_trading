@@ -1,95 +1,65 @@
 {
-    "date": "2026-07-24 02:17:45",
-    "predictions": [
+    "timestamp": "2026-07-24 16:15:00",
+    "account": {
+        "balance": 105234.50,
+        "buying_power": 45100.00
+    },
+    "market_data": {
+        "AAPL": {"price": 185.30, "change_pct": 1.2},
+        "MSFT": {"price": 420.15, "change_pct": -0.5},
+        "GOOGL": {"price": 145.20, "change_pct": 2.1},
+        "AMZN": {"price": 178.90, "change_pct": 0.8},
+        "META": {"price": 490.50, "change_pct": 3.4},
+        "TSLA": {"price": 195.10, "change_pct": -4.2},
+        "NVDA": {"price": 850.30, "change_pct": 5.1},
+        "JPM": {"price": 190.20, "change_pct": 0.1},
+        "V": {"price": 280.40, "change_pct": 0.5},
+        "WMT": {"price": 60.20, "change_pct": 1.1},
+        "JNJ": {"price": 155.60, "change_pct": -0.8},
+        "PG": {"price": 160.30, "change_pct": 0.2},
+        "MA": {"price": 460.10, "change_pct": 0.4},
+        "HD": {"price": 340.50, "change_pct": -1.2},
+        "CVX": {"price": 165.80, "change_pct": 1.5},
+        "MRK": {"price": 125.40, "change_pct": -0.3},
+        "KO": {"price": 62.10, "change_pct": 0.6},
+        "PEP": {"price": 170.80, "change_pct": -0.1},
+        "BAC": {"price": 38.50, "change_pct": 0.9},
+        "COST": {"price": 720.60, "change_pct": 1.8}
+    },
+    "top_picks": [
         {
-            "ticker": "ETH-USD",
-            "probability": 0.44437211751937866,
-            "regime_ok": false,
-            "sector": "CRYPTO"
+            "ticker": "NVDA",
+            "pred_return": 3.45,
+            "nlp_score": 0.65,
+            "nlp_alert": "🟢 FEU VERT: Score Media Positif (0.65).",
+            "headlines": [
+                "Nvidia announces breakthrough AI chip",
+                "Earnings expectation raised by analysts",
+                "Why Nvidia is unstoppable"
+            ]
         },
         {
-            "ticker": "LINK-USD",
-            "probability": 0.3051183223724365,
-            "regime_ok": false,
-            "sector": "CRYPTO"
+            "ticker": "META",
+            "pred_return": 2.15,
+            "nlp_score": -0.05,
+            "nlp_alert": "⚪ NEUTRE: Score Media (-0.05).",
+            "headlines": [
+                "Meta faces new regulation talks in EU",
+                "Zuckerberg sells 1M shares",
+                "Instagram growth remains steady"
+            ]
         },
         {
-            "ticker": "ADA-USD",
-            "probability": 0.4435897171497345,
-            "regime_ok": false,
-            "sector": "CRYPTO"
-        },
-        {
-            "ticker": "XRP-USD",
-            "probability": 0.34143370389938354,
-            "regime_ok": false,
-            "sector": "CRYPTO"
-        },
-        {
-            "ticker": "LTC-USD",
-            "probability": 0.5818029642105103,
-            "regime_ok": false,
-            "sector": "CRYPTO"
-        },
-        {
-            "ticker": "ENPH",
-            "probability": 0.31580838561058044,
-            "regime_ok": true,
-            "sector": "MIDCAPS"
-        },
-        {
-            "ticker": "OKTA",
-            "probability": 0.4253787398338318,
-            "regime_ok": true,
-            "sector": "MIDCAPS"
-        },
-        {
-            "ticker": "CCJ",
-            "probability": 0.30850061774253845,
-            "regime_ok": true,
-            "sector": "MIDCAPS"
-        },
-        {
-            "ticker": "MDB",
-            "probability": 0.5380163788795471,
-            "regime_ok": true,
-            "sector": "MIDCAPS"
-        },
-        {
-            "ticker": "SHOP",
-            "probability": 0.5929416418075562,
-            "regime_ok": true,
-            "sector": "MIDCAPS"
-        },
-        {
-            "ticker": "GLD",
-            "probability": 0.5606846809387207,
-            "regime_ok": true,
-            "sector": "COMMODITIES"
-        },
-        {
-            "ticker": "SLV",
-            "probability": 0.5031487345695496,
-            "regime_ok": true,
-            "sector": "COMMODITIES"
-        },
-        {
-            "ticker": "USO",
-            "probability": 0.32821759581565857,
-            "regime_ok": true,
-            "sector": "COMMODITIES"
-        },
-        {
-            "ticker": "WEAT",
-            "probability": 0.2919933795928955,
-            "regime_ok": true,
-            "sector": "COMMODITIES"
-        },
-        {
-            "ticker": "CPER",
-            "probability": 0.3718339502811432,
-            "regime_ok": true,
-            "sector": "COMMODITIES"
+            "ticker": "TSLA",
+            "pred_return": 1.85,
+            "nlp_score": -0.45,
+            "nlp_alert": "🔴 ATTENTION: Score Media Catastrophique (-0.45). J'AURAIS MIS MON VETO !",
+            "headlines": [
+                "Tesla misses delivery estimates drastically",
+                "Elon Musk sued by shareholders",
+                "Production halted in Berlin gigafactory",
+                "Tesla slashes prices again in China"
+            ]
         }
     ]
 }

@@ -1,0 +1,39 @@
+name: Daily Trading Bot (Alpaca Paper)
+
+on:
+  schedule:
+    # Exécuter du lundi au vendredi à 19:47 UTC (15h47 Heure de New York)
+    # L'heure 19:47 est choisie pour éviter les bouchons GitHub de 19h00 et 20h00
+    # et pour trader 13 minutes avant la fermeture des marchés américains.
+    - cron: '47 19 * * 1-5'
+  
+  workflow_dispatch: 
+    # Permet de lancer le bot manuellement depuis l'interface GitHub
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v3
+        
+      - name: Configuration de Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+          
+      - name: Installation des dépendances
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Exécution de l'algorithme
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python main.py

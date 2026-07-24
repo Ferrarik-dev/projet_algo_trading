@@ -1,0 +1,26 @@
+DEMARRAGE DU SETUP STEFAN JANSEN + DONNEES FONDAMENTALES
+Téléchargement des prix et des fondamentaux...
+Skipping quarter 2019-03-31 : X_train is empty
+Skipping quarter 2019-06-30 : X_train is empty
+Skipping quarter 2019-09-30 : X_train is empty
+Skipping quarter 2019-12-31 : X_train is empty
+Skipping quarter 2020-03-31 : X_train is empty
+Skipping quarter 2020-06-30 : X_train is empty
+Skipping quarter 2020-09-30 : X_train is empty
+Skipping quarter 2020-12-31 : X_train is empty
+Skipping quarter 2021-03-31 : X_train is empty
+Skipping quarter 2021-06-30 : X_train is empty
+Skipping quarter 2021-09-30 : X_train is empty
+Skipping quarter 2021-12-31 : X_train is empty
+Skipping quarter 2022-03-31 : X_train is empty
+Skipping quarter 2022-06-30 : X_train is empty
+Skipping quarter 2022-09-30 : X_train is empty
+Skipping quarter 2022-12-31 : X_train is empty
+Skipping quarter 2023-03-31 : X_train is empty
+Skipping quarter 2023-06-30 : X_train is empty
+Skipping quarter 2023-09-30 : X_train is empty
+Total entries in predictions_log for AAPL: 0
+Capital final   : $10,000.00
+Rendement Absolu: +0.00%
+Max Drawdown    : -0.00%
+Graphique sauvegardé : C:\Users\Elrik\.gemini\antigravity\brain\3bd380e5-0c43-4284-9645-00b7bc827801\mega_fundamentals_equity_curve.png

@@ -1,0 +1,333 @@
+:root {
+    --bg-color: #0b0f19;
+    --panel-bg: rgba(20, 27, 45, 0.6);
+    --panel-border: rgba(255, 255, 255, 0.1);
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --accent-gold: #fbbf24;
+    --accent-cyan: #06b6d4;
+    --color-up: #10b981;
+    --color-down: #ef4444;
+    --color-neutral: #64748b;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-color);
+    background-image: 
+        radial-gradient(circle at 15% 50%, rgba(6, 182, 212, 0.08), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(251, 191, 36, 0.05), transparent 25%);
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+h1, h2, h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+}
+
+/* Glassmorphism Panels */
+.glass-panel {
+    background: var(--panel-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+.dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 20px 30px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo h1 {
+    font-size: 24px;
+    letter-spacing: 2px;
+}
+
+.logo span {
+    color: var(--accent-cyan);
+}
+
+.pulse {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background: var(--color-up);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--color-up);
+    animation: pulsate 2s infinite ease-out;
+}
+
+@keyframes pulsate {
+    0% { transform: scale(0.8); opacity: 1; }
+    100% { transform: scale(1.8); opacity: 0; }
+}
+
+.status {
+    text-align: right;
+}
+
+.status p {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge.green {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--color-up);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* Grid Layout */
+.grid-layout {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 24px;
+}
+
+.col-left {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.col-right {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* KPI Card */
+.kpi-card h2 {
+    font-size: 16px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.kpi-value {
+    font-size: 42px;
+    font-weight: 800;
+    color: var(--accent-gold);
+    margin-bottom: 5px;
+}
+
+.kpi-card .subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+/* Chart Container */
+.chart-container h2 {
+    font-size: 16px;
+    color: var(--text-muted);
+    margin-bottom: 15px;
+}
+
+/* Picks Grid */
+.picks-container h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+    color: var(--accent-cyan);
+}
+
+.picks-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.pick-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 20px;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.pick-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255,255,255,0.06);
+}
+
+.pick-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.rank {
+    background: var(--accent-gold);
+    color: #000;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.ticker {
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.prediction {
+    text-align: center;
+}
+
+.pred-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 5px;
+}
+
+.pred-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--color-up);
+}
+
+/* NLP Section */
+.nlp-card h2 {
+    font-size: 18px;
+    color: var(--accent-gold);
+    margin-bottom: 15px;
+}
+
+.nlp-verdict {
+    padding: 15px;
+    border-radius: 8px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    text-align: center;
+    border: 1px solid;
+}
+
+.verdict-veto {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--color-down);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.verdict-ok {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--color-up);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.verdict-neutral {
+    background: rgba(100, 116, 139, 0.1);
+    color: var(--text-main);
+    border-color: rgba(100, 116, 139, 0.3);
+}
+
+.headlines-box h3 {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+
+.headlines-box ul {
+    list-style-type: none;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.headlines-box li {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.headlines-box li:last-child {
+    border-bottom: none;
+}
+
+/* Heatmap */
+.heatmap-container h2 {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+}
+
+.heat-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 15px 10px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+}
+
+.heat-ticker {
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.heat-value {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+/* Heat Colors */
+.heat-up-high { background-color: #059669; }
+.heat-up-low { background-color: #10b981; opacity: 0.8; }
+.heat-neutral { background-color: #475569; }
+.heat-down-low { background-color: #ef4444; opacity: 0.8; }
+.heat-down-high { background-color: #dc2626; }
+
+@media (max-width: 1024px) {
+    .grid-layout {
+        grid-template-columns: 1fr;
+    }
+    .picks-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+}

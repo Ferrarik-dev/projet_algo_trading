@@ -1,0 +1,48 @@
+Chargement du cerveau NLP FinBERT (Cela peut prendre quelques secondes)...
+
+--- MOTEUR NLP DE LECTURE DES NEWS (LIVE) ---
+
+Extraction des gros titres pour AAPL...
+Analyse FinBERT en cours pour AAPL:
+  [-] [NEGATIVE] (Confiance: 0.96) -> 'Magnificent 7' stocks erase $797 billion in market value in worst day since April 2025
+  [+] [POSITIVE] (Confiance: 0.54) -> 1 S&P 500 Stock to Target This Week and 2 Facing Headwinds
+  [-] [NEGATIVE] (Confiance: 0.84) -> The Discount On GOOGL Stock Looks Overdone
+  [-] [NEGATIVE] (Confiance: 0.96) -> Google’s Earnings Could be a Bad Omen for Big Tech
+  [+] [POSITIVE] (Confiance: 0.94) -> Intel Rises 3% on Q2 Earnings Beat, Upbeat Q3 Outlook as Chip Sector Stays Flat
+
+=> SCORE GLOBAL POUR AAPL : -0.26 | VERDICT : FEU ROUGE (Danger, panique médiatique)
+
+--------------------------------------------------------------------------------
+Extraction des gros titres pour MSFT...
+Analyse FinBERT en cours pour MSFT:
+  [=] [NEUTRAL] (Confiance: 0.47) -> Tech stocks live: Huang, Nadella, and other CEOs defend open-source AI as US threatens crackdown
+  [+] [POSITIVE] (Confiance: 0.86) -> Could AMD's new Helios AI rack system push it to outperform Nvidia?
+  [=] [NEUTRAL] (Confiance: 0.53) -> Google, Amazon, Meta, & Microsoft will spend 'unprecedented' $1T on AI capex in 2027: Analyst
+  [-] [NEGATIVE] (Confiance: 0.95) -> S&P 500, Nasdaq fall as investors juggle earnings, Mideast risks and tariffs
+  [=] [NEUTRAL] (Confiance: 0.91) -> Why Meta, Microsoft, and Nvidia are championing open-weight AI
+
+=> SCORE GLOBAL POUR MSFT : -0.02 | VERDICT : NEUTRE (Bruit médiatique normal)
+
+--------------------------------------------------------------------------------
+Extraction des gros titres pour NVDA...
+Analyse FinBERT en cours pour NVDA:
+  [=] [NEUTRAL] (Confiance: 0.47) -> Tech stocks live: Huang, Nadella, and other CEOs defend open-source AI as US threatens crackdown
+  [+] [POSITIVE] (Confiance: 0.86) -> Could AMD's new Helios AI rack system push it to outperform Nvidia?
+  [=] [NEUTRAL] (Confiance: 0.93) -> Buy Tesla After 15% Correction? Only If You Like Burning Your Money
+  [-] [NEGATIVE] (Confiance: 0.94) -> Why Did Micron Stock Drop Friday?
+  [=] [NEUTRAL] (Confiance: 0.88) -> Is NextEra Energy Inc a Buy After Its Latest Earnings Report?
+
+=> SCORE GLOBAL POUR NVDA : -0.02 | VERDICT : NEUTRE (Bruit médiatique normal)
+
+--------------------------------------------------------------------------------
+Extraction des gros titres pour TSLA...
+Analyse FinBERT en cours pour TSLA:
+  [=] [NEUTRAL] (Confiance: 0.59) -> Why Big Tech barnings could define the market next week
+  [=] [NEUTRAL] (Confiance: 0.93) -> Buy Tesla After 15% Correction? Only If You Like Burning Your Money
+  [-] [NEGATIVE] (Confiance: 0.95) -> S&P 500, Nasdaq fall as investors juggle earnings, Mideast risks and tariffs
+  [-] [NEGATIVE] (Confiance: 0.97) -> Tesla's Per-Car Profit Fell Another 8% Last Quarter, and I Fear This May Be the New Norm
+  [=] [NEUTRAL] (Confiance: 0.85) -> Tesla vs. GM: Only One Automotive Stock Has the Edge in 2026
+
+=> SCORE GLOBAL POUR TSLA : -0.39 | VERDICT : FEU ROUGE (Danger, panique médiatique)
+
+--------------------------------------------------------------------------------

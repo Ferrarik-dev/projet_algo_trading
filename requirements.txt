@@ -6,3 +6,7 @@ scikit-learn
 alpaca-py
 python-dotenv
 requests
+
+lightgbm
+transformers
+torch

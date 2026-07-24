@@ -1,285 +1,206 @@
 import yfinance as yf
 import pandas as pd
-import xgboost as xgb
-import requests
-import warnings
-import os
-import datetime
 import numpy as np
+import lightgbm as lgb
+from datetime import datetime
+from transformers import pipeline
+import os
 from dotenv import load_dotenv
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import MarketOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
+import warnings
+import json
+
+load_dotenv()
+try:
+    client = TradingClient(os.getenv('ALPACA_API_KEY'), os.getenv('ALPACA_SECRET_KEY'), paper=True)
+except Exception as e:
+    print(f"Erreur d'initialisation Alpaca: {e}")
+    client = None
 
 warnings.filterwarnings('ignore')
 
-# ==========================================
-# 1. INITIALISATION ET SÉCURITÉ
-# ==========================================
-load_dotenv()
-API_KEY = os.getenv('ALPACA_API_KEY')
-SECRET_KEY = os.getenv('ALPACA_SECRET_KEY')
-BASE_URL = os.getenv('ALPACA_BASE_URL', 'https://paper-api.alpaca.markets')
+# --- CONFIGURATION (STEFAN JANSEN SETUP) ---
+UNIVERSE = [
+    'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA', 'JPM', 'V', 'WMT',
+    'JNJ', 'PG', 'MA', 'HD', 'CVX', 'MRK', 'KO', 'PEP', 'BAC', 'COST'
+]
+TOP_N = 3 # On garde le Top 3 qui est le plus performant
+HORIZON_DAYS = 5
 
-print("================================================")
-print("   ROBOT DE TRADING V7 PRO (LIVE MODE)   ")
-print("================================================")
-
-if not SECRET_KEY or SECRET_KEY == "VOTRE_CLEF_SECRETE_ICI":
-    print("ERREUR CRITIQUE : La clé secrète Alpaca est manquante dans le fichier .env !")
-    print("Veuillez coller votre Secret Key dans le fichier .env avant de lancer le robot.")
-    exit(1)
-
-client = TradingClient(API_KEY, SECRET_KEY, paper=True)
-
-try:
-    account = client.get_account()
-    portfolio_value = float(account.portfolio_value)
-    print(f"Connexion Alpaca réussie ! Solde du compte : {portfolio_value:.2f} $")
-except Exception as e:
-    print(f"Erreur de connexion à Alpaca : {e}")
-    exit(1)
-
-# ==========================================
-# 2. UNIVERS ET PARAMÈTRES
-# ==========================================
-SECTORS = {
-    'CRYPTO': {
-        'tickers': ['ETH-USD', 'LINK-USD', 'ADA-USD', 'XRP-USD', 'LTC-USD'],
-        'benchmark': 'BTC-USD',
-    },
-    'MIDCAPS': {
-        'tickers': ['ENPH', 'OKTA', 'CCJ', 'MDB', 'SHOP'],
-        'benchmark': 'IWM',
-    },
-    'COMMODITIES': {
-        'tickers': ['GLD', 'SLV', 'USO', 'WEAT', 'CPER'],
-        'benchmark': 'DBC',
-    }
-}
-GLOBAL_BENCHMARK = 'SPY' 
-START_DATE = "2018-03-01" 
-# On télécharge les données jusqu'à aujourd'hui
-TODAY_STR = datetime.datetime.now().strftime('%Y-%m-%d')
-
-# Pour Alpaca, les symboles Crypto utilisent un format spécial (ex: ETH/USD)
-# On fera la conversion au moment de l'ordre.
-
-def fetch_fear_and_greed():
-    url = "https://api.alternative.me/fng/?limit=0"
-    try:
-        r = requests.get(url)
-        if r.status_code == 200:
-            data = r.json()['data']
-            dates = [pd.to_datetime(int(item['timestamp']), unit='s') for item in data]
-            values = [int(item['value']) for item in data]
-            series = pd.Series(values, index=dates)
-            series.index = series.index.normalize() 
-            return series
-    except Exception as e:
-        pass
-    return pd.Series()
-
-def fetch_all_data():
-    print("\nEtape 1 : Telechargement des donnees du marche en direct...")
-    data_dict = {}
+def prepare_features(df_raw):
+    df = df_raw.copy()
     
-    df_global = yf.download(GLOBAL_BENCHMARK, start=START_DATE, end=TODAY_STR, progress=False)
-    if isinstance(df_global.columns, pd.MultiIndex): df_global.columns = df_global.columns.droplevel(1)
-    data_dict['MASTER'] = df_global['Close']
-    
-    df_vix = yf.download('^VIX', start=START_DATE, end=TODAY_STR, progress=False)
-    if isinstance(df_vix.columns, pd.MultiIndex): df_vix.columns = df_vix.columns.droplevel(1)
-    data_dict['VIX'] = df_vix['Close']
-    
-    data_dict['FNG'] = fetch_fear_and_greed()
-    
-    for sector_name, info in SECTORS.items():
-        df_bench = yf.download(info['benchmark'], start=START_DATE, end=TODAY_STR, progress=False)
-        if isinstance(df_bench.columns, pd.MultiIndex): df_bench.columns = df_bench.columns.droplevel(1)
+    # Lags (Momentum)
+    for lag in [1, 5, 21, 42, 63, 126, 252]:
+        df[f'Ret_{lag}d'] = df['Close'].pct_change(lag)
         
-        sector_data = {'benchmark': df_bench['Close'], 'assets': {}}
-        for ticker in info['tickers']:
-            df_asset = yf.download(ticker, start=START_DATE, end=TODAY_STR, progress=False)
-            if isinstance(df_asset.columns, pd.MultiIndex): df_asset.columns = df_asset.columns.droplevel(1)
-            
-            df = pd.DataFrame()
-            df['Close'] = df_asset['Close']
-            df['Volume'] = df_asset['Volume']
-            df.dropna(subset=['Close'], inplace=True)
-            sector_data['assets'][ticker] = df
-            
-        data_dict[sector_name] = sector_data
-        
-    return data_dict
-
-def prepare_asset_features(df_asset, sector_name, series_sector_bench, series_global_bench, series_fng, series_vix):
-    df = df_asset.copy()
-    df['Sector_Close'] = series_sector_bench
-    df['Global_Close'] = series_global_bench
+    df['Vol_21d'] = df['Ret_1d'].rolling(21).std()
     
-    if sector_name == 'CRYPTO' and not series_fng.empty:
-        df['Fear_Greed'] = series_fng
-        df['Fear_Greed'] = df['Fear_Greed'].ffill()
-    
-    if sector_name != 'CRYPTO' and not series_vix.empty:
-        df['VIX'] = series_vix
-        df['VIX'] = df['VIX'].ffill()
-        
-    df.dropna(subset=['Sector_Close', 'Global_Close'], inplace=True)
-    
-    df['SMA_10'] = df['Close'].rolling(window=10).mean()
-    df['SMA_50'] = df['Close'].rolling(window=50).mean()
-    df['Returns'] = df['Close'].pct_change()
-    df['Volatility'] = df['Returns'].rolling(window=20).std()
-    
-    df['Sector_Returns'] = df['Sector_Close'].pct_change()
-    df['Sector_SMA_200'] = df['Sector_Close'].rolling(window=200).mean()
-    df['Global_SMA_200'] = df['Global_Close'].rolling(window=200).mean()
-    
-    if 'VIX' in df.columns:
-        df['VIX_Ratio'] = df['VIX'] / df['VIX'].rolling(window=30).mean()
-    
-    df['Volume_Ratio'] = df['Volume'] / df['Volume'].rolling(window=20).mean()
-    df['Relative_Strength_Sector'] = df['Close'].pct_change(periods=10) - df['Sector_Close'].pct_change(periods=10)
-    
+    # RSI 14
     delta = df['Close'].diff()
     gain = delta.clip(lower=0).ewm(alpha=1/14, adjust=False).mean()
     loss = (-delta.clip(upper=0)).ewm(alpha=1/14, adjust=False).mean()
     rs = gain / loss
     df['RSI_14'] = 100 - (100 / (1 + rs))
     
+    # MACD
     ema_12 = df['Close'].ewm(span=12, adjust=False).mean()
     ema_26 = df['Close'].ewm(span=26, adjust=False).mean()
     df['MACD'] = ema_12 - ema_26
     
-    # La cible pour l'entraînement historique (Horizon = 15 jours V7 PRO)
-    df['Target'] = (df['Close'].shift(-15) > df['Close']).astype(int)
+    # Bollinger Bands
+    sma_20 = df['Close'].rolling(20).mean()
+    std_20 = df['Close'].rolling(20).std()
+    df['BB_Upper'] = sma_20 + (std_20 * 2)
+    df['BB_Lower'] = sma_20 - (std_20 * 2)
+    df['Dist_BB_Upper'] = (df['Close'] / df['BB_Upper']) - 1
+    df['Dist_BB_Lower'] = (df['Close'] / df['BB_Lower']) - 1
     
+    # Time Dummies
+    df['DayOfWeek'] = df.index.dayofweek
+    df['Month'] = df.index.month
+    
+    # Target
+    df['Target_5d'] = df['Close'].shift(-5) / df['Close'] - 1
+    
+    df.dropna(inplace=True)
     return df
 
-def generate_todays_signals(data_dict):
-    print("\nEtape 2 : Generation des Signaux (Prediction Machine Learning)...")
-    scored_signals = []
-    all_predictions = []
+def generate_todays_signals():
+    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] TELECHARGEMENT DES DONNEES (TOP 20 S&P500)")
+    data_dict = {}
+    for ticker in UNIVERSE:
+        df = yf.download(ticker, period='5y', progress=False)
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.droplevel(1)
+        if not df.empty:
+            data_dict[ticker] = df
+
+    print("PREPARATION DES FEATURES...")
+    all_features = {}
+    features_list = [
+        'Ret_1d', 'Ret_5d', 'Ret_21d', 'Ret_42d', 'Ret_63d', 'Ret_126d', 'Ret_252d',
+        'Vol_21d', 'RSI_14', 'MACD', 'Dist_BB_Upper', 'Dist_BB_Lower', 'DayOfWeek', 'Month'
+    ]
     
-    for sector_name, info in SECTORS.items():
-        series_sector = data_dict[sector_name]['benchmark']
-        series_global = data_dict['MASTER']
-        series_fng = data_dict['FNG']
-        series_vix = data_dict['VIX']
+    for ticker, df in data_dict.items():
+        all_features[ticker] = prepare_features(df)
+
+    print("ENTRAINEMENT DU MODELE LIGHTGBM (sans look-ahead bias)...")
+    X_train_list, y_train_list = [], []
+    current_date = list(all_features.values())[0].index[-1]
+    
+    for ticker, df in all_features.items():
+        # Retrait des 5 derniers jours pour eviter la triche sur le Target_5d
+        df_hist = df.iloc[:-5] 
+        X_train_list.append(df_hist[features_list])
+        y_train_list.append(df_hist['Target_5d'])
         
-        features = ['SMA_10', 'SMA_50', 'Returns', 'Volatility', 'Volume_Ratio', 'RSI_14', 'MACD', 'Sector_Returns', 'Relative_Strength_Sector']
-        if sector_name == 'CRYPTO':
-            features.append('Fear_Greed')
-        else:
-            features.append('VIX')
-            features.append('VIX_Ratio')
-            
-        for ticker, df_raw in data_dict[sector_name]['assets'].items():
-            df = prepare_asset_features(df_raw, sector_name, series_sector, series_global, series_fng, series_vix)
-            
-            # Séparer l'historique (pour entraîner) de la toute dernière ligne (Aujourd'hui, pour prédire)
-            df_train = df.iloc[:-1].dropna() # On enlève la dernière ligne car elle n'a pas de Target valide (shift -15)
-            df_today = df.iloc[-1:] # La donnée du jour
-            
-            # S'il manque des données pour aujourd'hui, on ignore
-            if df_today[features].isnull().values.any():
-                continue
+    X_train = pd.concat(X_train_list)
+    y_train = pd.concat(y_train_list)
+    
+    model = lgb.LGBMRegressor(
+        n_estimators=100, learning_rate=0.05, max_depth=5,
+        num_leaves=31, subsample=0.8, random_state=42, n_jobs=-1
+    )
+    model.fit(X_train, y_train)
+    
+    print("GENERATION DES PREDICTIONS POUR AUJOURD'HUI...")
+    predictions = []
+    for ticker, df in all_features.items():
+        row = df.iloc[-1]
+        if not row[features_list].isnull().any():
+            X_today = pd.DataFrame([row[features_list]])
+            pred_return = model.predict(X_today)[0]
+            if pred_return > 0: # On ne s'interesse qu'aux actions prevues a la hausse
+                predictions.append((ticker, pred_return))
                 
-            X_train = df_train[features]
-            y_train = df_train['Target']
-            X_today = df_today[features]
+    # Classement
+    predictions.sort(key=lambda x: x[1], reverse=True)
+    top_picks = predictions[:TOP_N]
+    
+    # Construction de la Market Data pour le Dashboard
+    dashboard_market = {}
+    for ticker, df in data_dict.items():
+        last_close = df['Close'].iloc[-1]
+        prev_close = df['Close'].iloc[-2]
+        pct_change = ((last_close / prev_close) - 1) * 100
+        dashboard_market[ticker] = {
+            'price': float(last_close),
+            'change_pct': float(pct_change)
+        }
+    
+    print("\n--- ANALYSE NLP FINBERT (Mode Alerte) ---")
+    print("Chargement du modele linguistique...")
+    nlp = pipeline("sentiment-analysis", model="ProsusAI/finbert")
+    
+    top_picks_dashboard = []
+    
+    if not top_picks:
+        print("Aucun signal d'achat interessant aujourd'hui.")
+    else:
+        print("\n--- MESSAGE TELEGRAM DE SYNTHESE ---")
+        print("[LIGHTGBM] Top 3 Actions selectionnees :")
+        for rank, (ticker, pred) in enumerate(top_picks, 1):
             
-            # Apprentissage Continu (Walk-Forward) : L'IA s'entraîne sur TOUTE l'histoire jusqu'à hier
-            model = xgb.XGBClassifier(n_estimators=50, max_depth=3, learning_rate=0.05, subsample=0.8, eval_metric='logloss', random_state=42)
-            model.fit(X_train, y_train)
+            # NLP Scoring
+            stock = yf.Ticker(ticker)
+            news_items = stock.news
+            headlines = []
+            if news_items:
+                for item in news_items[:5]:
+                    if 'content' in item and 'title' in item['content']:
+                        headlines.append(item['content']['title'])
+                    elif 'title' in item:
+                        headlines.append(item['title'])
             
-            # Prédiction pour AUJOURD'HUI
-            prob_today = model.predict_proba(X_today)[:, 1][0]
+            avg_score = 0
+            if headlines:
+                total_score = 0
+                for headline in headlines:
+                    res = nlp(headline)[0]
+                    score = res['score'] * (1 if res['label'] == 'positive' else -1 if res['label'] == 'negative' else 0)
+                    total_score += score
+                avg_score = total_score / len(headlines)
             
-            # Vérification du Régime (Moyennes mobiles 200 jours)
-            regime_sector_ok = df_today['Sector_Close'].values[0] > df_today['Sector_SMA_200'].values[0]
-            regime_global_ok = df_today['Global_Close'].values[0] > df_today['Global_SMA_200'].values[0]
-            
-            if sector_name == 'COMMODITIES':
-                regime_ok = regime_sector_ok
+            # Shadow Mode Logic
+            nlp_alert = ""
+            if avg_score < -0.2:
+                nlp_alert = f"ATTENTION: Score Media Catastrophique ({avg_score:.2f}). J'AURAIS MIS MON VETO !"
+            elif avg_score > 0.2:
+                nlp_alert = f"FEU VERT: Score Media Positif ({avg_score:.2f})."
             else:
-                regime_ok = regime_global_ok and regime_sector_ok
+                nlp_alert = f"NEUTRE: Score Media ({avg_score:.2f})."
                 
-            print(f"[{ticker}] Probabilité de Hausse: {prob_today*100:.1f}% | Régime OK: {regime_ok}")
+            print(f"#{rank} {ticker} (Rendement 5J prevu : +{pred*100:.2f}%)")
+            print(f"   -> NLP Opinion: {nlp_alert}")
             
-            rsi = df_today['RSI_14'].values[0] if 'RSI_14' in df_today.columns else 50.0
-            macd = df_today['MACD'].values[0] if 'MACD' in df_today.columns else 0.0
-            sma_50 = df_today['SMA_50'].values[0] if 'SMA_50' in df_today.columns else df_today['Close'].values[0]
-            price = df_today['Close'].values[0]
-            sma_dist = ((price - sma_50) / sma_50 * 100) if sma_50 > 0 else 0.0
-            
-            all_predictions.append({
+            top_picks_dashboard.append({
                 'ticker': ticker,
-                'probability': float(prob_today),
-                'regime_ok': bool(regime_ok),
-                'sector': sector_name,
-                'rsi': float(rsi),
-                'macd': float(macd),
-                'sma_dist': float(sma_dist)
+                'pred_return': float(pred * 100),
+                'nlp_score': float(avg_score),
+                'nlp_alert': nlp_alert,
+                'headlines': headlines
             })
             
-            if prob_today > 0.60 and regime_ok:
-                scored_signals.append((ticker, prob_today))
-                
-    # V7 PRO : Trier par probabilité et ne garder que le Top-5 absolu
-    scored_signals.sort(key=lambda x: x[1], reverse=True)
-    top_5 = [item[0] for item in scored_signals[:5]]
-    
-    print(f"\n--- TOP-5 DU JOUR (V7 PRO) ---")
-    for i, item in enumerate(scored_signals[:5]):
-        print(f"{i+1}. {item[0]} ({item[1]*100:.1f}%)")
-        
-    import json
-    from datetime import datetime
-    try:
-        export_data = {
-            'date': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'predictions': all_predictions
-        }
-        with open('dashboard_data.json', 'w') as f:
-            json.dump(export_data, f, indent=4)
-        print("Export des predictions dans dashboard_data.json reussi.")
-    except Exception as e:
-        print(f"Erreur export JSON : {e}")
-        
-    return top_5
-
-def send_telegram_notification(message):
-    token = os.getenv('TELEGRAM_BOT_TOKEN')
-    chat_id = os.getenv('TELEGRAM_CHAT_ID')
-    
-    if not token or not chat_id:
-        print("Telegram non configuré. Alerte ignorée.")
-        return
-        
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
-    payload = {
-        "chat_id": chat_id,
-        "text": message,
-        "parse_mode": "HTML"
-    }
-    try:
-        requests.post(url, json=payload)
-    except Exception as e:
-        print(f"Erreur Telegram: {e}")
+    print("-" * 45)
+    return top_picks, dashboard_market, top_picks_dashboard
 
 def format_ticker_for_alpaca(ticker):
-    # Convertit 'ETH-USD' en 'ETHUSD' (ou 'ETH/USD' selon l'API crypto, Alpaca V2 utilise souvent 'ETH/USD')
-    if '-USD' in ticker:
-        return ticker.replace('-USD', '/USD')
+    # Les actions standards n'ont pas besoin de formatage particulier
     return ticker
 
 def execute_live_orders(buy_signals):
+    account_info = {'balance': 0.0, 'buying_power': 0.0}
+    if client is None:
+        print("API Alpaca non configuree. Mode Simulation uniquement.")
+        return account_info
+        
     print("\nEtape 3 : Execution des Ordres sur Alpaca...")
     
-    # 0. Annuler tous les ordres en attente (evite l'erreur "insufficient qty")
+    # 0. Annuler tous les ordres en attente
     try:
         client.cancel_orders()
         print("Nettoyage : Tous les anciens ordres en attente ont ete annules.")
@@ -298,67 +219,71 @@ def execute_live_orders(buy_signals):
     # 2. Vendre ce qui n'a plus de signal
     for symbol in current_holdings.keys():
         if symbol not in alpaca_buy_signals:
-            print(f"Vente de {symbol} (Sorti du Top-5)")
-            client.close_position(symbol)
+            print(f"Vente de {symbol} (Sorti du Top-3)")
+            try:
+                client.close_position(symbol)
+            except Exception as e:
+                print(f"Erreur a la revente de {symbol} : {e}")
             
     # 3. Acheter les nouveaux signaux
     if len(alpaca_buy_signals) == 0:
-        print("Aucun signal d'achat aujourd'hui. L'IA reste en sécurité (Cash).")
+        print("Aucun signal d'achat aujourd'hui. L'IA reste en securite (Cash).")
         return
         
-    # Smart Rebalance V7 PRO : Identifier les NOUVEAUX actifs à acheter
+    # Smart Rebalance : Identifier les NOUVEAUX actifs a acheter
     new_assets = [s for s in alpaca_buy_signals if s not in current_holdings]
     
     if len(new_assets) > 0:
         account = client.get_account()
         buying_power = float(account.buying_power)
-        # On utilise 95% du cash disponible, divisé par le nombre de NOUVEAUX actifs à financer
+        # On utilise 95% du cash disponible, divise par le nombre de NOUVEAUX actifs a financer
         budget_per_asset = (buying_power * 0.95) / len(new_assets)
         budget_per_asset = round(budget_per_asset, 2)
-        print(f"Budget alloué par NOUVEL actif : {budget_per_asset} $")
+        print(f"Budget alloue par NOUVEL actif : {budget_per_asset} $")
     else:
-        print("Tous les actifs du Top-5 sont déjà en portefeuille. Aucun nouvel achat nécessaire.")
+        print("Tous les actifs du Top-3 sont deja en portefeuille. Aucun nouvel achat necessaire.")
         budget_per_asset = 0
     
-    print(f"Budget alloué par actif : {budget_per_asset} $")
-    
     for symbol in new_assets:
-        if symbol not in current_holdings:
-            print(f"Achat de {symbol}")
-            try:
-                # Ordre Notionnel (Basé sur le budget en $, fractionnel automatique)
-                req = MarketOrderRequest(
-                    symbol=symbol,
-                    notional=budget_per_asset,
-                    side=OrderSide.BUY,
-                    time_in_force=TimeInForce.DAY
-                )
-                client.submit_order(req)
-                print(f" -> Ordre exécuté : {budget_per_asset:.2f} $ de {symbol}")
-            except Exception as e:
-                print(f"Erreur lors de l'achat de {symbol} : {e}")
-        else:
-            print(f"On conserve deja {symbol}, aucun nouvel ordre.")
+        print(f"Achat de {symbol}")
+        try:
+            # Ordre Notionnel (Base sur le budget en $, fractionnel automatique)
+            req = MarketOrderRequest(
+                symbol=symbol,
+                notional=budget_per_asset,
+                side=OrderSide.BUY,
+                time_in_force=TimeInForce.DAY
+            )
+            client.submit_order(req)
+            print(f" -> Ordre execute : {budget_per_asset:.2f} $ de {symbol}")
+        except Exception as e:
+            print(f"Erreur lors de l'achat de {symbol} : {e}")
 
-if __name__ == "__main__":
-    data_dict = fetch_all_data()
-    buy_signals = generate_todays_signals(data_dict)
-    execute_live_orders(buy_signals)
-    
-    # Envoi de la notification Telegram
+    # Return account info for Dashboard
     try:
         acc = client.get_account()
-        bal = float(acc.portfolio_value)
-        msg = f"🚀 <b>V7 PRO Exécuté !</b>\n\n"
-        msg += f"💰 <b>Solde :</b> {bal:.2f} $\n"
-        msg += f"🏆 <b>Top-5 du jour :</b>\n"
-        if not buy_signals:
-            msg += "- Aucun (Cash)"
-        else:
-            for s in buy_signals:
-                msg += f"- {s}\n"
-        send_telegram_notification(msg)
-    except Exception as e:
-        print("Impossible d'envoyer la notification:", e)
+        account_info['balance'] = float(acc.portfolio_value)
+        account_info['buying_power'] = float(acc.buying_power)
+    except:
+        pass
+    return account_info
+
+if __name__ == '__main__':
+    top_picks, dashboard_market, top_picks_dashboard = generate_todays_signals()
+    buy_signals = [item[0] for item in top_picks] if top_picks else []
+    
+    account_info = execute_live_orders(buy_signals)
+    
+    # Generation du JSON pour le Dashboard
+    dashboard_data = {
+        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        'account': account_info,
+        'market_data': dashboard_market,
+        'top_picks': top_picks_dashboard
+    }
+    
+    with open('dashboard_data.json', 'w', encoding='utf-8') as f:
+        json.dump(dashboard_data, f, indent=4, ensure_ascii=False)
         
-    print("\nTermine pour aujourd'hui ! Le robot a ferme ses portes.")
+    print("\n[OK] Donnees du Dashboard exportees (dashboard_data.json)")
+    print("Termine pour aujourd'hui ! Le robot a ferme ses portes.")
