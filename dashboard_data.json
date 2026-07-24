@@ -1,95 +1,140 @@
 {
-    "date": "2026-07-24 02:17:45",
+    "date": "2026-07-24 02:30:23",
     "predictions": [
         {
             "ticker": "ETH-USD",
             "probability": 0.44437211751937866,
             "regime_ok": false,
-            "sector": "CRYPTO"
+            "sector": "CRYPTO",
+            "rsi": 60.395138250329225,
+            "macd": 30.601658125503036,
+            "sma_dist": 4.0180348885575015
         },
         {
             "ticker": "LINK-USD",
             "probability": 0.3051183223724365,
             "regime_ok": false,
-            "sector": "CRYPTO"
+            "sector": "CRYPTO",
+            "rsi": 59.12940367181838,
+            "macd": 0.10594146221607303,
+            "sma_dist": 2.0931620706820677
         },
         {
             "ticker": "ADA-USD",
             "probability": 0.4435897171497345,
             "regime_ok": false,
-            "sector": "CRYPTO"
+            "sector": "CRYPTO",
+            "rsi": 51.81908857267842,
+            "macd": -0.0036431470716674352,
+            "sma_dist": -9.026657106896325
         },
         {
             "ticker": "XRP-USD",
             "probability": 0.34143370389938354,
             "regime_ok": false,
-            "sector": "CRYPTO"
+            "sector": "CRYPTO",
+            "rsi": 52.1283393438977,
+            "macd": -0.015367162612367702,
+            "sma_dist": -4.578533738026436
         },
         {
             "ticker": "LTC-USD",
             "probability": 0.5818029642105103,
             "regime_ok": false,
-            "sector": "CRYPTO"
+            "sector": "CRYPTO",
+            "rsi": 57.54664973817493,
+            "macd": 0.12530648315797066,
+            "sma_dist": -0.29217438295266074
         },
         {
             "ticker": "ENPH",
             "probability": 0.31580838561058044,
             "regime_ok": true,
-            "sector": "MIDCAPS"
+            "sector": "MIDCAPS",
+            "rsi": 35.60625669548,
+            "macd": -2.9191517801944045,
+            "sma_dist": -23.947012475338852
         },
         {
             "ticker": "OKTA",
             "probability": 0.4253787398338318,
             "regime_ok": true,
-            "sector": "MIDCAPS"
+            "sector": "MIDCAPS",
+            "rsi": 50.83070533109009,
+            "macd": 6.214939525674083,
+            "sma_dist": 12.651952115315247
         },
         {
             "ticker": "CCJ",
             "probability": 0.30850061774253845,
             "regime_ok": true,
-            "sector": "MIDCAPS"
+            "sector": "MIDCAPS",
+            "rsi": 38.38762364577043,
+            "macd": -4.582624565964679,
+            "sma_dist": -12.70245917866972
         },
         {
             "ticker": "MDB",
             "probability": 0.5380163788795471,
             "regime_ok": true,
-            "sector": "MIDCAPS"
+            "sector": "MIDCAPS",
+            "rsi": 38.21442833449587,
+            "macd": -6.7671719666234935,
+            "sma_dist": -10.715826851214365
         },
         {
             "ticker": "SHOP",
             "probability": 0.5929416418075562,
             "regime_ok": true,
-            "sector": "MIDCAPS"
+            "sector": "MIDCAPS",
+            "rsi": 40.729082999833174,
+            "macd": 1.613370186962257,
+            "sma_dist": -1.0623429096902712
         },
         {
             "ticker": "GLD",
             "probability": 0.5606846809387207,
             "regime_ok": true,
-            "sector": "COMMODITIES"
+            "sector": "COMMODITIES",
+            "rsi": 44.417611331404444,
+            "macd": -4.981713957080956,
+            "sma_dist": -5.061498425435143
         },
         {
             "ticker": "SLV",
             "probability": 0.5031487345695496,
             "regime_ok": true,
-            "sector": "COMMODITIES"
+            "sector": "COMMODITIES",
+            "rsi": 41.03074511491273,
+            "macd": -2.135631769515534,
+            "sma_dist": -13.937608587323878
         },
         {
             "ticker": "USO",
             "probability": 0.32821759581565857,
             "regime_ok": true,
-            "sector": "COMMODITIES"
+            "sector": "COMMODITIES",
+            "rsi": 71.57690494787869,
+            "macd": 2.992658829564675,
+            "sma_dist": 11.11642582073815
         },
         {
             "ticker": "WEAT",
             "probability": 0.2919933795928955,
             "regime_ok": true,
-            "sector": "COMMODITIES"
+            "sector": "COMMODITIES",
+            "rsi": 69.2034468530669,
+            "macd": 0.7146104718889781,
+            "sma_dist": 8.845209398484034
         },
         {
             "ticker": "CPER",
             "probability": 0.3718339502811432,
             "regime_ok": true,
-            "sector": "COMMODITIES"
+            "sector": "COMMODITIES",
+            "rsi": 50.16462277685613,
+            "macd": 0.16480220484629626,
+            "sma_dist": -0.6768681456506889
         }
     ]
 }
