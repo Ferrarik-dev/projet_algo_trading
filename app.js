@@ -9,7 +9,16 @@ async function loadDashboardData() {
         updateKPIs(data.account);
         updateTopPicks(data.top_picks);
         updateFinBERT(data.top_picks);
-        updateHeatmap(data.market_data);
+        
+        if (data.account && data.account.history) {
+            updateHistory(data.account.history);
+        }
+        
+        if (data.full_analysis) {
+            updateAnalysisTable(data.full_analysis);
+        } else if (data.market_data) {
+            updateHeatmap(data.market_data); // Fallback old version
+        }
 
     } catch (error) {
         console.error("Erreur de chargement:", error);
@@ -124,6 +133,64 @@ function updateHeatmap(marketData) {
             <span class="heat-value">${asset.change > 0 ? '+' : ''}${asset.change.toFixed(2)}%</span>
         `;
         container.appendChild(box);
+    });
+}
+
+// Nouvelle fonction: Historique Alpaca
+function updateHistory(historyData) {
+    const container = document.getElementById('history-list');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (!historyData || historyData.length === 0) {
+        container.innerHTML = '<p>Aucune transaction récente.</p>';
+        return;
+    }
+    
+    historyData.forEach(trade => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        
+        const isBuy = trade.side.toLowerCase() === 'buy';
+        const sideClass = isBuy ? 'history-buy' : 'history-sell';
+        const sideText = isBuy ? 'ACHAT' : 'VENTE';
+        
+        item.innerHTML = `
+            <div class="history-side ${sideClass}">${sideText}</div>
+            <div class="history-symbol">${trade.symbol}</div>
+            <div class="history-qty">${trade.qty} parts</div>
+            <div class="history-price">$${trade.price.toFixed(2)}</div>
+            <div class="history-date">${trade.date.split(' ')[0]}</div>
+        `;
+        container.appendChild(item);
+    });
+}
+
+// Nouvelle fonction: Tableau Analytique Complet
+function updateAnalysisTable(analysisData) {
+    const tbody = document.getElementById('analysis-tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    if (!analysisData || analysisData.length === 0) return;
+    
+    analysisData.forEach(asset => {
+        const tr = document.createElement('tr');
+        
+        const isUp = asset.pred_return > 0;
+        const colorClass = isUp ? 'col-up' : 'col-down';
+        const sign = isUp ? '+' : '';
+        
+        tr.innerHTML = `
+            <td style="font-weight:bold">${asset.ticker}</td>
+            <td class="${colorClass}">${sign}${asset.pred_return.toFixed(2)}%</td>
+            <td>${asset.rsi.toFixed(1)}</td>
+            <td>${asset.macd.toFixed(2)}</td>
+            <td>${asset.volatility.toFixed(2)}%</td>
+        `;
+        tbody.appendChild(tr);
     });
 }
 

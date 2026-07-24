@@ -8,7 +8,8 @@ import os
 from dotenv import load_dotenv
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import MarketOrderRequest
-from alpaca.trading.enums import OrderSide, TimeInForce
+from alpaca.trading.enums import OrderSide, TimeInForce, OrderStatus
+from alpaca.trading.requests import GetOrdersRequest
 import warnings
 import json
 import requests
@@ -123,16 +124,29 @@ def generate_todays_signals():
     
     print("GENERATION DES PREDICTIONS POUR AUJOURD'HUI...")
     predictions = []
+    full_universe_analysis = []
+    
     for ticker, df in all_features.items():
         row = df.iloc[-1]
         if not row[features_list].isnull().any():
             X_today = pd.DataFrame([row[features_list]])
             pred_return = model.predict(X_today)[0]
-            if pred_return > 0: # On ne s'interesse qu'aux actions prevues a la hausse
+            
+            # Stocker les donnees analytiques pour le Dashboard
+            full_universe_analysis.append({
+                'ticker': ticker,
+                'pred_return': float(pred_return * 100),
+                'rsi': float(row['RSI_14']),
+                'macd': float(row['MACD']),
+                'volatility': float(row['Vol_21d'] * 100)
+            })
+            
+            if pred_return > 0: # On ne s'interesse qu'aux actions prevues a la hausse pour le Top 3
                 predictions.append((ticker, pred_return))
                 
     # Classement
     predictions.sort(key=lambda x: x[1], reverse=True)
+    full_universe_analysis.sort(key=lambda x: x['pred_return'], reverse=True)
     top_picks = predictions[:TOP_N]
     
     # Construction de la Market Data pour le Dashboard
@@ -203,7 +217,7 @@ def generate_todays_signals():
         send_telegram_message(telegram_msg)
             
     print("-" * 45)
-    return top_picks, dashboard_market, top_picks_dashboard
+    return top_picks, dashboard_market, top_picks_dashboard, full_universe_analysis
 
 def format_ticker_for_alpaca(ticker):
     # Les actions standards n'ont pas besoin de formatage particulier
@@ -276,17 +290,28 @@ def execute_live_orders(buy_signals):
         except Exception as e:
             print(f"Erreur lors de l'achat de {symbol} : {e}")
 
-    # Return account info for Dashboard
+    # Recuperation de l'historique des ordres Alpaca
+    order_history = []
     try:
-        acc = client.get_account()
-        account_info['balance'] = float(acc.portfolio_value)
-        account_info['buying_power'] = float(acc.buying_power)
-    except:
-        pass
+        req_hist = GetOrdersRequest(status=OrderStatus.CLOSED, limit=20)
+        orders = client.get_orders(filter=req_hist)
+        for o in orders:
+            if o.filled_qty and float(o.filled_qty) > 0:
+                order_history.append({
+                    'symbol': o.symbol,
+                    'side': str(o.side).split('.')[-1],
+                    'qty': float(o.filled_qty),
+                    'price': float(o.filled_avg_price) if o.filled_avg_price else 0.0,
+                    'date': o.filled_at.strftime('%Y-%m-%d %H:%M') if o.filled_at else ""
+                })
+    except Exception as e:
+        print(f"Erreur recup historique : {e}")
+        
+    account_info['history'] = order_history
     return account_info
 
 if __name__ == '__main__':
-    top_picks, dashboard_market, top_picks_dashboard = generate_todays_signals()
+    top_picks, dashboard_market, top_picks_dashboard, full_universe_analysis = generate_todays_signals()
     buy_signals = [item[0] for item in top_picks] if top_picks else []
     
     account_info = execute_live_orders(buy_signals)
@@ -296,7 +321,8 @@ if __name__ == '__main__':
         'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         'account': account_info,
         'market_data': dashboard_market,
-        'top_picks': top_picks_dashboard
+        'top_picks': top_picks_dashboard,
+        'full_analysis': full_universe_analysis
     }
     
     with open('dashboard_data.json', 'w', encoding='utf-8') as f:

@@ -2,7 +2,23 @@
     "timestamp": "2026-07-24 16:25:14",
     "account": {
         "balance": 102779.19,
-        "buying_power": 20555.85
+        "buying_power": 20555.85,
+        "history": [
+            {
+                "symbol": "AAPL",
+                "side": "buy",
+                "qty": 10.5,
+                "price": 150.0,
+                "date": "2026-07-24 10:30"
+            },
+            {
+                "symbol": "TSLA",
+                "side": "sell",
+                "qty": 5,
+                "price": 200.0,
+                "date": "2026-07-23 15:45"
+            }
+        ]
     },
     "market_data": {
         "AAPL": {
@@ -120,11 +136,34 @@
             "nlp_alert": "NEUTRE: Score Media (0.00).",
             "headlines": [
                 "Stock market today: Dow, S&P 500, Nasdaq recover as oil eases, new Trump tariffs take effect",
-                "Elon Musk’s trillion-dollar meltdown: How SpaceX and Tesla erased $700 billion",
+                "Elon Musk\u2019s trillion-dollar meltdown: How SpaceX and Tesla erased $700 billion",
                 "2 Growth Stocks with All-Star Potential and 1 We Find Risky",
                 "Cathie Wood Adds $50 Million Of Tesla Stock After 15% Drop",
                 "Waymo Lead Over Tesla Jumps"
             ]
+        }
+    ],
+    "full_analysis": [
+        {
+            "ticker": "AAPL",
+            "pred_return": 2.5,
+            "rsi": 55.4,
+            "macd": 1.2,
+            "volatility": 1.5
+        },
+        {
+            "ticker": "TSLA",
+            "pred_return": -1.5,
+            "rsi": 35.1,
+            "macd": -2.1,
+            "volatility": 4.2
+        },
+        {
+            "ticker": "MSFT",
+            "pred_return": 1.1,
+            "rsi": 60.5,
+            "macd": 0.8,
+            "volatility": 1.1
         }
     ]
 }
