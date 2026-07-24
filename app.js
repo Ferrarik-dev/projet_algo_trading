@@ -1,265 +1,145 @@
-async function loadDashboardData() {
+// app.js - Logique Frontend style QuickBooks
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchDashboardData();
+});
+
+async function fetchDashboardData() {
     try {
-        // Cache buster pour forcer GitHub Pages à charger la toute dernière version du JSON
         const response = await fetch(`dashboard_data.json?t=${new Date().getTime()}`);
-        if (!response.ok) throw new Error("Fichier de données introuvable");
+        if (!response.ok) throw new Error('Data not found');
         const data = await response.json();
-
-        updateHeader(data.timestamp);
-        updateKPIs(data.account);
-        updateTopPicks(data.top_picks, data.account ? data.account.allocations : null);
-        updateFinBERT(data.top_picks);
         
-        if (data.account && data.account.history) {
-            updateHistory(data.account.history);
-        }
+        updateAccount(data.account);
+        updateTopPicks(data.top_picks);
+        updateHistory(data.account.history);
+        updatePerformance(data.performance);
         
-        if (data.performance) {
-            updatePerformance(data.performance);
-        }
-        
-        if (data.full_analysis) {
-            updateAnalysisTable(data.full_analysis);
-        } else if (data.market_data) {
-            updateHeatmap(data.market_data); // Fallback old version
-        }
-
     } catch (error) {
-        console.error("Erreur de chargement:", error);
+        console.error("Erreur de chargement des donnees:", error);
     }
 }
 
-function updateHeader(timestamp) {
-    document.getElementById('last-update').innerText = timestamp;
+function formatCurrency(value) {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
 }
 
-function updateKPIs(account) {
+function formatPercent(value) {
+    return (value > 0 ? '+' : '') + value.toFixed(2) + '%';
+}
+
+function updateAccount(account) {
     if (!account) return;
-    const formatCurrency = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
     
-    document.getElementById('account-balance').innerText = formatCurrency(account.balance);
-    document.getElementById('buying-power').innerText = formatCurrency(account.buying_power);
+    document.getElementById('account-balance').textContent = formatCurrency(account.balance || 0);
+    document.getElementById('buying-power').textContent = formatCurrency(account.buying_power || 0);
 }
 
-function updateTopPicks(topPicks, allocations) {
-    const container = document.getElementById('top-picks-grid');
-    container.innerHTML = '';
-
-    if (!topPicks || topPicks.length === 0) {
-        container.innerHTML = '<p>Aucune action sélectionnée aujourd\'hui.</p>';
+function updateTopPicks(picks) {
+    const container = document.getElementById('top-picks-list');
+    const countBadge = document.getElementById('picks-count');
+    
+    if (!picks || picks.length === 0) {
+        container.innerHTML = '<div class="loading-text">Aucun achat en cours</div>';
+        countBadge.textContent = '0';
         return;
     }
     
-    const formatCurrency = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
-
-    topPicks.forEach((pick, index) => {
-        const card = document.createElement('div');
-        card.className = 'pick-card';
-        
-        let finbertColor = pick.nlp_score > 0.2 ? 'var(--color-up)' : (pick.nlp_score < -0.2 ? 'var(--color-down)' : '#94a3b8');
-        let finbertIcon = pick.nlp_score > 0.2 ? '✅' : (pick.nlp_score < -0.2 ? '❌' : '➖');
-        
-        let invested = (allocations && allocations[pick.ticker]) ? formatCurrency(allocations[pick.ticker]) : "$0.00";
-        let priceStr = pick.price ? formatCurrency(pick.price) : "N/A";
-        
-        card.innerHTML = `
-            <div class="pick-header" style="display: flex; align-items: center; gap: 10px;">
-                <span class="rank">${index + 1}</span>
-                <span class="ticker">${pick.ticker}</span>
-                <span style="margin-left: auto; font-weight: 600; font-size: 15px;">${priceStr}</span>
-            </div>
-            <div class="prediction">
-                <span class="pred-label">Hausse Prévue (5J)</span>
-                <span class="pred-value">+${pick.pred_return.toFixed(2)}%</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 12px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
-                <span style="color: ${finbertColor};">${finbertIcon} FinBERT: ${pick.nlp_score.toFixed(2)}</span>
-                <span style="color: var(--text-muted);">Investi: <strong style="color: var(--text-main);">${invested}</strong></span>
-            </div>
-        `;
-        container.appendChild(card);
-    });
-}
-
-function updateFinBERT(topPicks) {
-    if (!topPicks || topPicks.length === 0) return;
-
-    // We analyze the worst score among the top picks to see if there is a veto
-    let worstScore = 1;
-    let worstAlert = "";
-    let allHeadlines = [];
-
-    topPicks.forEach(pick => {
-        if (pick.nlp_score < worstScore) {
-            worstScore = pick.nlp_score;
-            worstAlert = pick.nlp_alert;
-        }
-        if (pick.headlines && pick.headlines.length > 0) {
-            allHeadlines = allHeadlines.concat(pick.headlines.map(h => `[${pick.ticker}] ${h}`));
-        }
-    });
-
-    const verdictEl = document.getElementById('nlp-verdict');
-    verdictEl.className = 'nlp-verdict'; // reset
-    verdictEl.innerText = worstAlert || `Score global : ${worstScore.toFixed(2)}`;
-
-    if (worstScore < -0.2) {
-        verdictEl.classList.add('verdict-veto');
-    } else if (worstScore > 0.2) {
-        verdictEl.classList.add('verdict-ok');
-    } else {
-        verdictEl.classList.add('verdict-neutral');
-    }
-
-    // Update headlines
-    const headlinesList = document.getElementById('nlp-headlines');
-    headlinesList.innerHTML = '';
-    allHeadlines.slice(0, 10).forEach(h => {
-        const li = document.createElement('li');
-        li.innerText = h;
-        headlinesList.appendChild(li);
-    });
-}
-
-function updateHeatmap(marketData) {
-    const container = document.getElementById('heatmap-grid');
+    countBadge.textContent = picks.length;
     container.innerHTML = '';
-
-    if (!marketData) return;
-
-    // Convert object to array and sort by performance
-    const assets = Object.keys(marketData).map(ticker => ({
-        ticker,
-        price: marketData[ticker].price,
-        change: marketData[ticker].change_pct
-    })).sort((a, b) => b.change - a.change);
-
-    assets.forEach(asset => {
-        const box = document.createElement('div');
-        box.className = 'heat-box';
+    
+    picks.forEach(pick => {
+        const isPos = pick.pred_return > 0;
+        const colorClass = isPos ? 'positive' : 'negative';
         
-        // Determine color class
-        if (asset.change > 2) box.classList.add('heat-up-high');
-        else if (asset.change > 0) box.classList.add('heat-up-low');
-        else if (asset.change < -2) box.classList.add('heat-down-high');
-        else if (asset.change < 0) box.classList.add('heat-down-low');
-        else box.classList.add('heat-neutral');
-
-        box.innerHTML = `
-            <span class="heat-ticker">${asset.ticker}</span>
-            <span class="heat-value">${asset.change > 0 ? '+' : ''}${asset.change.toFixed(2)}%</span>
+        const html = `
+            <div class="list-item">
+                <div class="item-left">
+                    <span class="item-title">${pick.ticker}</span>
+                    <span class="item-subtitle">${pick.nlp_alert.split(':')[0]}</span>
+                </div>
+                <div class="item-right">
+                    <span class="item-value">${formatCurrency(pick.price)}</span>
+                    <span class="item-subvalue ${colorClass}">Est. ${formatPercent(pick.pred_return)}</span>
+                </div>
+            </div>
         `;
-        container.appendChild(box);
+        container.insertAdjacentHTML('beforeend', html);
     });
 }
 
-// Nouvelle fonction: Historique Alpaca
-function updateHistory(historyData) {
+function updateHistory(history) {
     const container = document.getElementById('history-list');
-    if (!container) return;
     
-    container.innerHTML = '';
-    
-    if (!historyData || historyData.length === 0) {
-        container.innerHTML = '<p>Aucune transaction récente.</p>';
+    if (!history || history.length === 0) {
+        container.innerHTML = '<div class="loading-text">Aucune transaction récente</div>';
         return;
     }
     
-    historyData.forEach(trade => {
-        const item = document.createElement('div');
-        item.className = 'history-item';
-        
-        const isBuy = trade.side.toLowerCase() === 'buy';
-        const sideClass = isBuy ? 'history-buy' : 'history-sell';
-        const sideText = isBuy ? 'ACHAT' : 'VENTE';
-        
-        item.innerHTML = `
-            <div class="history-side ${sideClass}">${sideText}</div>
-            <div class="history-symbol">${trade.symbol}</div>
-            <div class="history-qty">${trade.qty} parts</div>
-            <div class="history-price">$${trade.price.toFixed(2)}</div>
-            <div class="history-date">${trade.date.split(' ')[0]}</div>
+    container.innerHTML = '';
+    
+    // N'afficher que les 5 dernieres
+    history.slice(0, 5).forEach(order => {
+        const html = `
+            <div class="list-item">
+                <div class="item-left">
+                    <span class="item-title">${order.symbol}</span>
+                    <span class="item-subtitle">${order.date}</span>
+                </div>
+                <div class="item-right">
+                    <span class="item-value">${order.side === 'BUY' ? 'Achat' : 'Vente'}</span>
+                    <span class="item-subvalue">${order.qty} @ ${formatCurrency(order.price)}</span>
+                </div>
+            </div>
         `;
-        container.appendChild(item);
+        container.insertAdjacentHTML('beforeend', html);
     });
 }
 
-// Nouvelle fonction: Tableau Analytique Complet
-function updateAnalysisTable(analysisData) {
-    const tbody = document.getElementById('analysis-tbody');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '';
-    
-    if (!analysisData || analysisData.length === 0) return;
-    
-    analysisData.forEach(asset => {
-        const tr = document.createElement('tr');
-        
-        const isUp = asset.pred_return > 0;
-        const colorClass = isUp ? 'col-up' : 'col-down';
-        const sign = isUp ? '+' : '';
-        
-        tr.innerHTML = `
-            <td style="font-weight:bold">${asset.ticker}</td>
-            <td class="${colorClass}">${sign}${asset.pred_return.toFixed(2)}%</td>
-            <td>${asset.rsi.toFixed(1)}</td>
-            <td>${asset.macd.toFixed(2)}</td>
-            <td>${asset.volatility.toFixed(2)}%</td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
+function updatePerformance(perf) {
+    if (!perf || !perf.timestamps || perf.timestamps.length === 0) return;
 
-let perfChartInstance = null;
+    const botRet = perf.bot_return_pct || 0;
+    const botPerfEl = document.getElementById('bot-perf');
+    const trendIcon = document.getElementById('trend-icon');
+    const trendContainer = document.getElementById('trend-container');
+    
+    botPerfEl.textContent = formatPercent(botRet);
+    
+    if (botRet >= 0) {
+        trendContainer.className = 'balance-trend positive';
+        trendIcon.name = 'arrow-up-outline';
+    } else {
+        trendContainer.className = 'balance-trend negative';
+        trendIcon.name = 'arrow-down-outline';
+    }
 
-function updatePerformance(perfData) {
-    if (!perfData || !perfData.timestamps || perfData.timestamps.length === 0) return;
-    
-    const botPerf = document.getElementById('bot-perf');
-    const spyPerf = document.getElementById('spy-perf');
-    
-    const botVal = perfData.bot_return_pct;
-    const spyVal = perfData.spy_return_pct;
-    
-    botPerf.innerText = (botVal >= 0 ? '+' : '') + botVal.toFixed(2) + '%';
-    botPerf.style.color = botVal >= 0 ? 'var(--color-up)' : 'var(--color-down)';
-    
-    spyPerf.innerText = (spyVal >= 0 ? '+' : '') + spyVal.toFixed(2) + '%';
-    spyPerf.style.color = spyVal >= 0 ? 'var(--color-up)' : 'var(--color-down)';
-    
     const ctx = document.getElementById('perfChart').getContext('2d');
     
-    if (perfChartInstance) {
-        perfChartInstance.destroy();
-    }
-    
-    perfChartInstance = new Chart(ctx, {
+    new Chart(ctx, {
         type: 'line',
         data: {
-            labels: perfData.timestamps,
+            labels: perf.timestamps,
             datasets: [
                 {
-                    label: 'QuantBot IA (Base 100)',
-                    data: perfData.bot_equity,
-                    borderColor: '#06b6d4',
-                    backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                    label: 'Bot IA (Base 100)',
+                    data: perf.bot_equity,
+                    borderColor: '#2CA01C', // QuickBooks Green
+                    backgroundColor: 'rgba(44, 160, 28, 0.1)',
                     borderWidth: 2,
-                    tension: 0.3,
+                    tension: 0.4,
                     fill: true,
-                    pointRadius: 0,
-                    pointHoverRadius: 4
+                    pointRadius: 0
                 },
                 {
-                    label: 'S&P 500 Benchmark',
-                    data: perfData.spy_equity,
-                    borderColor: '#fbbf24',
+                    label: 'S&P 500 (Base 100)',
+                    data: perf.spy_equity,
+                    borderColor: '#6B6C72', // Neutral Gray
                     borderWidth: 2,
                     borderDash: [5, 5],
-                    tension: 0.3,
+                    tension: 0.4,
                     fill: false,
-                    pointRadius: 0,
-                    pointHoverRadius: 4
+                    pointRadius: 0
                 }
             ]
         },
@@ -272,27 +152,37 @@ function updatePerformance(perfData) {
             },
             plugins: {
                 legend: {
-                    labels: { color: '#94a3b8' }
+                    position: 'bottom',
+                    labels: {
+                        color: '#393A3D',
+                        font: { family: "'Inter', sans-serif", size: 11 },
+                        usePointStyle: true,
+                        boxWidth: 6
+                    }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(15, 23, 42, 0.9)'
+                    backgroundColor: '#393A3D',
+                    titleFont: { family: "'Inter', sans-serif", size: 12 },
+                    bodyFont: { family: "'Inter', sans-serif", size: 12 },
+                    padding: 10,
+                    cornerRadius: 8
                 }
             },
             scales: {
                 x: {
-                    grid: { color: 'rgba(255,255,255,0.05)' },
-                    ticks: { color: '#94a3b8', maxTicksLimit: 8 }
+                    display: false // Hide x axis for cleaner mobile look
                 },
                 y: {
-                    grid: { color: 'rgba(255,255,255,0.05)' },
-                    ticks: { color: '#94a3b8' }
+                    grid: {
+                        color: '#E3E5E8',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#6B6C72',
+                        font: { family: "'Inter', sans-serif", size: 10 }
+                    }
                 }
             }
         }
     });
 }
-
-// Lancer le chargement
-loadDashboardData();
-// Rafraichir toutes les 60 secondes si le bot tourne en continu
-setInterval(loadDashboardData, 60000);

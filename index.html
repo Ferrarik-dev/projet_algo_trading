@@ -2,145 +2,100 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuantBot Terminal | Premium</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QuantBook - Portfolio</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="dashboard-container">
-        <!-- Header -->
-        <header class="glass-panel header">
-            <div class="logo">
-                <span class="pulse"></span>
-                <h1>QUANT<span>BOT</span> V10</h1>
-            </div>
-            <div class="status">
-                <p>Dernière Exécution : <span id="last-update">Chargement...</span></p>
-                <div class="badge green">Système en ligne</div>
-            </div>
-        </header>
 
-        <!-- Main Grid -->
-        <main class="grid-layout">
+    <!-- Header -->
+    <header class="app-header">
+        <button class="icon-btn"><ion-icon name="menu-outline"></ion-icon></button>
+        <h1 class="logo">QuantBook</h1>
+        <div class="profile-pic">EL</div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="app-content">
+        
+        <!-- Account Balance Card -->
+        <section class="card balance-card">
+            <h2 class="card-title">Solde Total</h2>
+            <div class="balance-amount" id="account-balance">$0.00</div>
+            <div class="balance-trend" id="trend-container">
+                <ion-icon name="arrow-up-outline" id="trend-icon"></ion-icon>
+                <span id="bot-perf">0.00%</span> <span class="trend-label">ce mois-ci</span>
+            </div>
             
-            <!-- Left Column: KPI & S&P500 -->
-            <section class="col-left">
-                <!-- Account Balance -->
-                <div class="glass-panel kpi-card">
-                    <h2>Solde du Portefeuille</h2>
-                    <div class="kpi-value" id="account-balance">$0.00</div>
-                    <p class="subtitle">Pouvoir d'achat : <span id="buying-power">$0.00</span></p>
-                </div>
+            <div class="divider"></div>
+            
+            <div class="buying-power-row">
+                <span class="bp-label">Pouvoir d'achat disponible</span>
+                <span class="bp-value" id="buying-power">$0.00</span>
+            </div>
+        </section>
 
-                <!-- Performance Comparison -->
-                <div class="glass-panel perf-card">
-                    <h2>📈 Performance Globale (Dernier Mois)</h2>
-                    <div style="display: flex; gap: 30px; margin-bottom: 20px; align-items: center;">
-                        <div style="background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 8px; border-left: 4px solid var(--accent-cyan);">
-                            <span style="font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">🤖 QuantBot IA</span><br>
-                            <span id="bot-perf" style="font-size: 24px; font-weight: 800;">0.00%</span>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 8px; border-left: 4px solid var(--accent-gold);">
-                            <span style="font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">📊 Benchmark S&P 500</span><br>
-                            <span id="spy-perf" style="font-size: 24px; font-weight: 800;">0.00%</span>
-                        </div>
-                    </div>
-                    <div>
-                        <canvas id="perfChart" style="width: 100%; height: 250px;"></canvas>
-                    </div>
-                </div>
+        <!-- Benchmark Comparison Chart -->
+        <section class="card chart-card">
+            <div class="card-header-row">
+                <h2 class="card-title">Performance vs S&P 500</h2>
+                <button class="more-btn"><ion-icon name="ellipsis-vertical"></ion-icon></button>
+            </div>
+            <div class="chart-container">
+                <canvas id="perfChart"></canvas>
+            </div>
+        </section>
 
-                <!-- S&P 500 Chart (TradingView Widget) -->
-                <div class="glass-panel chart-container">
-                    <h2>S&P 500 (Marché Global)</h2>
-                    <div class="tradingview-widget-container">
-                        <div id="tradingview_spy"></div>
-                    </div>
-                </div>
-                
-                <!-- FinBERT AI Sentiment -->
-                <div class="glass-panel nlp-card">
-                    <h2>🧠 Superviseur FinBERT (NLP)</h2>
-                    <div class="nlp-verdict" id="nlp-verdict">
-                        Vérification en cours...
-                    </div>
-                    <div class="headlines-box">
-                        <h3>Derniers Titres Analysés :</h3>
-                        <ul id="nlp-headlines">
-                            <li>Chargement des actualités...</li>
-                        </ul>
-                    </div>
-                </div>
-            </section>
+        <!-- Top Picks List -->
+        <section class="card picks-card">
+            <div class="card-header-row">
+                <h2 class="card-title">Top Achats IA</h2>
+                <span class="badge" id="picks-count">3</span>
+            </div>
+            
+            <div class="list-container" id="top-picks-list">
+                <div class="loading-text">Chargement des données...</div>
+            </div>
+        </section>
 
-            <!-- Right Column: Top Picks & Heatmap -->
-            <section class="col-right">
-                
-                <!-- Top 3 AI Picks -->
-                <div class="glass-panel picks-container">
-                    <h2>🏆 Top 3 Intelligence Artificielle (LightGBM)</h2>
-                    <div class="picks-grid" id="top-picks-grid">
-                        <!-- Injected via JS -->
-                    </div>
-                </div>
+        <!-- Recent Transactions -->
+        <section class="card history-card" style="margin-bottom: 90px;">
+            <div class="card-header-row">
+                <h2 class="card-title">Historique des Ordres</h2>
+                <button class="more-btn"><ion-icon name="filter-outline"></ion-icon></button>
+            </div>
+            
+            <div class="list-container" id="history-list">
+                <div class="loading-text">Chargement des données...</div>
+            </div>
+        </section>
 
-                <!-- History -->
-                <div class="glass-panel history-container">
-                    <h2>📝 Historique des Transactions (Alpaca)</h2>
-                    <div class="history-list" id="history-list">
-                        <!-- Injected via JS -->
-                    </div>
-                </div>
+    </main>
 
-                <!-- Full Universe Analysis Table -->
-                <div class="glass-panel full-analysis-container">
-                    <h2>📊 Analyses & Prédictions de l'Univers</h2>
-                    <div class="table-responsive">
-                        <table class="analysis-table">
-                            <thead>
-                                <tr>
-                                    <th>Actif</th>
-                                    <th>Prédiction (5J)</th>
-                                    <th>RSI (14)</th>
-                                    <th>MACD</th>
-                                    <th>Volatilité</th>
-                                </tr>
-                            </thead>
-                            <tbody id="analysis-tbody">
-                                <!-- Injected via JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active">
+            <ion-icon name="home"></ion-icon>
+            <span>Accueil</span>
+        </a>
+        <a href="#" class="nav-item">
+            <ion-icon name="pie-chart-outline"></ion-icon>
+            <span>Actifs</span>
+        </a>
+        <a href="#" class="nav-item">
+            <ion-icon name="swap-horizontal-outline"></ion-icon>
+            <span>Ordres</span>
+        </a>
+        <a href="#" class="nav-item">
+            <ion-icon name="settings-outline"></ion-icon>
+            <span>Réglages</span>
+        </a>
+    </nav>
 
-            </section>
-        </main>
-    </div>
-
-    <!-- TradingView Script -->
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-    <script type="text/javascript">
-        new TradingView.widget({
-            "width": "100%",
-            "height": 300,
-            "symbol": "AMEX:SPY",
-            "interval": "D",
-            "timezone": "Etc/UTC",
-            "theme": "dark",
-            "style": "2",
-            "locale": "fr",
-            "enable_publishing": false,
-            "backgroundColor": "rgba(0,0,0,0)",
-            "gridColor": "rgba(255,255,255,0.05)",
-            "hide_top_toolbar": true,
-            "hide_legend": true,
-            "save_image": false,
-            "container_id": "tradingview_spy"
-        });
-    </script>
     <script src="app.js"></script>
 </body>
 </html>

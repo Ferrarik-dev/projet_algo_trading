@@ -123,7 +123,6 @@ def generate_todays_signals():
     
     print("GENERATION DES PREDICTIONS POUR AUJOURD'HUI...")
     predictions = []
-    full_universe_analysis = []
     
     for ticker, df in all_features.items():
         row = df.iloc[-1]
@@ -131,45 +130,21 @@ def generate_todays_signals():
             X_today = pd.DataFrame([row[features_list]])
             pred_return = model.predict(X_today)[0]
             
-            # Stocker les donnees analytiques pour le Dashboard
-            full_universe_analysis.append({
-                'ticker': ticker,
-                'pred_return': float(pred_return * 100),
-                'rsi': float(row['RSI_14']),
-                'macd': float(row['MACD']),
-                'volatility': float(row['Vol_21d'] * 100)
-            })
-            
             if pred_return > 0: # On ne s'interesse qu'aux actions prevues a la hausse pour le Top 3
                 predictions.append((ticker, pred_return))
                 
     # Classement
     predictions.sort(key=lambda x: x[1], reverse=True)
-    full_universe_analysis.sort(key=lambda x: x['pred_return'], reverse=True)
     top_picks = predictions[:TOP_N]
-    
-    # Construction de la Market Data pour le Dashboard
-    dashboard_market = {}
-    for ticker, df in data_dict.items():
-        last_close = df['Close'].iloc[-1]
-        prev_close = df['Close'].iloc[-2]
-        pct_change = ((last_close / prev_close) - 1) * 100
-        dashboard_market[ticker] = {
-            'price': float(last_close),
-            'change_pct': float(pct_change)
-        }
     
     print("\n--- ANALYSE NLP FINBERT (Mode Alerte) ---")
     print("Chargement du modele linguistique...")
     nlp = pipeline("sentiment-analysis", model="ProsusAI/finbert")
     
-    top_picks_dashboard = []
-    
+    top_picks_details = []
     if not top_picks:
         print("Aucun signal d'achat interessant aujourd'hui.")
     else:
-        print("\n--- MESSAGE TELEGRAM DE SYNTHESE ---")
-        telegram_msg = "🤖 [QuantBot Premium] - Rapport du Jour\n\n"
         for rank, (ticker, pred) in enumerate(top_picks, 1):
             
             # NLP Scoring
@@ -195,32 +170,23 @@ def generate_todays_signals():
             # Shadow Mode Logic
             nlp_alert = ""
             if avg_score < -0.2:
-                nlp_alert = f"ATTENTION: Score Media Catastrophique ({avg_score:.2f}). J'AURAIS MIS MON VETO !"
+                nlp_alert = f"ATTENTION (Catastrophique)"
             elif avg_score > 0.2:
-                nlp_alert = f"FEU VERT: Score Media Positif ({avg_score:.2f})."
+                nlp_alert = f"FEU VERT (Positif)"
             else:
-                nlp_alert = f"NEUTRE: Score Media ({avg_score:.2f})."
+                nlp_alert = f"NEUTRE"
                 
-            line_str = f"#{rank} {ticker} (Rendement 5J prevu : +{pred*100:.2f}%)\n   -> NLP Opinion: {nlp_alert}"
-            print(line_str)
-            telegram_msg += line_str + "\n\n"
-            
-            # Recuperer le dernier prix pour l'affichage
-            last_p = dashboard_market[ticker]['price'] if ticker in dashboard_market else 0.0
-            
-            top_picks_dashboard.append({
+            top_picks_details.append({
                 'ticker': ticker,
-                'price': last_p,
-                'pred_return': float(pred * 100),
-                'nlp_score': float(avg_score),
-                'nlp_alert': nlp_alert,
-                'headlines': headlines
+                'pred_return': pred,
+                'nlp_score': avg_score,
+                'nlp_alert': nlp_alert
             })
             
-        send_telegram_message(telegram_msg)
-            
     print("-" * 45)
-    return top_picks, dashboard_market, top_picks_dashboard, full_universe_analysis
+    return top_picks_details
+
+
 
 def get_performance_comparison(alpaca_client):
     perf_data = {
@@ -236,7 +202,6 @@ def get_performance_comparison(alpaca_client):
         
     print("\nEtape 4 : Calcul des performances (Bot vs S&P 500)...")
     try:
-        # Recuperation de l'historique du compte sur 1 mois
         req = GetPortfolioHistoryRequest(period="1M", timeframe="1D")
         history = alpaca_client.get_portfolio_history(req)
         
@@ -246,15 +211,11 @@ def get_performance_comparison(alpaca_client):
         timestamps = history.timestamp
         equity = history.equity
         
-        # Convertir les timestamps Unix en format YYYY-MM-DD
         date_strs = [datetime.fromtimestamp(ts).strftime('%Y-%m-%d') for ts in timestamps]
         start_date = date_strs[0]
-        
-        # Ajouter 1 jour a la date de fin pour etre inclusif dans yfinance
         end_date_obj = datetime.strptime(date_strs[-1], '%Y-%m-%d') + pd.Timedelta(days=1)
         end_date = end_date_obj.strftime('%Y-%m-%d')
         
-        # Telechargement SPY
         spy = yf.download('SPY', start=start_date, end=end_date, progress=False)
         if isinstance(spy.columns, pd.MultiIndex):
             spy.columns = spy.columns.droplevel(1)
@@ -265,7 +226,6 @@ def get_performance_comparison(alpaca_client):
         initial_bot_equity = equity[0]
         initial_spy_price = spy['Close'].iloc[0]
         
-        # Normalisation en Base 100
         bot_normalized = [(e / initial_bot_equity) * 100 for e in equity]
         spy_normalized = []
         
@@ -291,30 +251,33 @@ def format_ticker_for_alpaca(ticker):
     # Les actions standards n'ont pas besoin de formatage particulier
     return ticker
 
-def execute_live_orders(buy_signals):
-    account_info = {'balance': 0.0, 'buying_power': 0.0}
+def execute_live_orders(top_picks_details):
     if client is None:
         print("API Alpaca non configuree. Mode Simulation uniquement.")
-        return account_info
+        return
         
     print("\nEtape 3 : Execution des Ordres sur Alpaca...")
     
-    # 0. Annuler tous les ordres en attente
+    # 0. Etat Initial du compte
+    account = client.get_account()
+    initial_balance = float(account.portfolio_value)
+    
     try:
         client.cancel_orders()
         print("Nettoyage : Tous les anciens ordres en attente ont ete annules.")
     except Exception as e:
         print(f"Erreur lors de l'annulation des ordres : {e}")
     
-    # 1. Lister les positions actuelles
+    # 1. Lister les positions actuelles (Avant changement)
     positions = client.get_all_positions()
     current_holdings = {pos.symbol: float(pos.qty) for pos in positions}
-    allocations = {pos.symbol: float(pos.market_value) for pos in positions}
+    holdings_before = list(current_holdings.keys())
     
-    print(f"Positions actuellement detenues : {list(current_holdings.keys())}")
-    print(f"Nouveaux Signaux d'Achat generes par l'IA : {buy_signals}")
-    
+    buy_signals = [pick['ticker'] for pick in top_picks_details]
     alpaca_buy_signals = [format_ticker_for_alpaca(t) for t in buy_signals]
+    
+    print(f"Positions actuellement detenues : {holdings_before}")
+    print(f"Nouveaux Signaux d'Achat generes par l'IA : {buy_signals}")
     
     # 2. Vendre ce qui n'a plus de signal
     for symbol in current_holdings.keys():
@@ -326,41 +289,82 @@ def execute_live_orders(buy_signals):
                 print(f"Erreur a la revente de {symbol} : {e}")
             
     # 3. Acheter les nouveaux signaux
-    if len(alpaca_buy_signals) == 0:
-        print("Aucun signal d'achat aujourd'hui. L'IA reste en securite (Cash).")
-        return
+    if len(alpaca_buy_signals) > 0:
+        new_assets = [s for s in alpaca_buy_signals if s not in current_holdings]
         
-    # Smart Rebalance : Identifier les NOUVEAUX actifs a acheter
-    new_assets = [s for s in alpaca_buy_signals if s not in current_holdings]
-    
-    if len(new_assets) > 0:
-        account = client.get_account()
-        buying_power = float(account.buying_power)
-        # On utilise 95% du cash disponible, divise par le nombre de NOUVEAUX actifs a financer
-        budget_per_asset = (buying_power * 0.95) / len(new_assets)
-        budget_per_asset = round(budget_per_asset, 2)
-        print(f"Budget alloue par NOUVEL actif : {budget_per_asset} $")
+        if len(new_assets) > 0:
+            # On utilise le account reactualise
+            account_fresh = client.get_account()
+            buying_power = float(account_fresh.buying_power)
+            budget_per_asset = (buying_power * 0.95) / len(new_assets)
+            budget_per_asset = round(budget_per_asset, 2)
+            print(f"Budget alloue par NOUVEL actif : {budget_per_asset} $")
+            
+            for symbol in new_assets:
+                print(f"Achat de {symbol}")
+                try:
+                    req = MarketOrderRequest(
+                        symbol=symbol,
+                        notional=budget_per_asset,
+                        side=OrderSide.BUY,
+                        time_in_force=TimeInForce.DAY
+                    )
+                    client.submit_order(req)
+                    print(f" -> Ordre execute : {budget_per_asset:.2f} $ de {symbol}")
+                except Exception as e:
+                    print(f"Erreur lors de l'achat de {symbol} : {e}")
+        else:
+            print("Tous les actifs du Top-3 sont deja en portefeuille. Aucun nouvel achat necessaire.")
     else:
-        print("Tous les actifs du Top-3 sont deja en portefeuille. Aucun nouvel achat necessaire.")
-        budget_per_asset = 0
-    
-    for symbol in new_assets:
-        print(f"Achat de {symbol}")
-        try:
-            # Ordre Notionnel (Base sur le budget en $, fractionnel automatique)
-            req = MarketOrderRequest(
-                symbol=symbol,
-                notional=budget_per_asset,
-                side=OrderSide.BUY,
-                time_in_force=TimeInForce.DAY
-            )
-            client.submit_order(req)
-            print(f" -> Ordre execute : {budget_per_asset:.2f} $ de {symbol}")
-            allocations[symbol] = budget_per_asset
-        except Exception as e:
-            print(f"Erreur lors de l'achat de {symbol} : {e}")
+        print("Aucun signal d'achat aujourd'hui. L'IA reste en securite (Cash).")
 
-    # Recuperation de l'historique des ordres Alpaca
+    # 4. Bilan Post-Execution pour Telegram
+    print("\n--- PREPARATION DU MESSAGE TELEGRAM ---")
+    new_positions = client.get_all_positions()
+    new_holdings = [pos.symbol for pos in new_positions]
+    
+    investments = {}
+    prices = {}
+    for pos in new_positions:
+        investments[pos.symbol] = float(pos.market_value)
+        prices[pos.symbol] = float(pos.current_price)
+        
+    telegram_msg = "🤖 *[QuantBot Premium]* - Rapport du Jour\n\n"
+    telegram_msg += f"💰 *Solde du portefeuille* : {initial_balance:,.2f} $\n\n"
+    
+    if len(holdings_before) > 0:
+        telegram_msg += f"🔄 *Top 3 avant changement* : {', '.join(holdings_before)}\n"
+    
+    telegram_msg += f"📈 *Top 3 apres changement* : {', '.join(new_holdings) if new_holdings else 'Aucun'}\n\n"
+    
+    if not top_picks_details:
+        telegram_msg += "❌ Aucun signal d'achat interessant aujourd'hui.\n"
+    else:
+        telegram_msg += "--- DETAILS DES NOUVEAUX ACHATS ---\n"
+        for rank, pick in enumerate(top_picks_details, 1):
+            ticker = pick['ticker']
+            pred = pick['pred_return']
+            nlp_score = pick['nlp_score']
+            nlp_alert = pick['nlp_alert']
+            
+            val = investments.get(ticker, 0.0)
+            price = prices.get(ticker, 0.0)
+            
+            # Injection pour l'export JSON
+            pick['price'] = price
+            pick['pred_return'] = pred * 100
+            
+            telegram_msg += (
+                f"#{rank} *{ticker}*\n"
+                f"   🔸 Rendement 5J prevu : +{pred*100:.2f}%\n"
+                f"   🔸 Score Media : {nlp_alert} ({nlp_score:.2f})\n"
+                f"   🔸 Montant investi : {val:,.2f} $\n"
+                f"   🔸 Prix de l'action : {price:,.2f} $\n\n"
+            )
+
+    send_telegram_message(telegram_msg)
+    print("Message Telegram envoye avec succes !")
+    
     order_history = []
     try:
         req_hist = GetOrdersRequest(status=OrderStatus.CLOSED, limit=20)
@@ -372,34 +376,27 @@ def execute_live_orders(buy_signals):
                     'side': str(o.side).split('.')[-1],
                     'qty': float(o.filled_qty),
                     'price': float(o.filled_avg_price) if o.filled_avg_price else 0.0,
-                    'date': o.filled_at.strftime('%Y-%m-%d %H:%M') if o.filled_at else ""
+                    'date': o.filled_at.strftime('%Y-%m-%d') if o.filled_at else ""
                 })
     except Exception as e:
         print(f"Erreur recup historique : {e}")
         
-    account_info['history'] = order_history
-    account_info['allocations'] = allocations
-    return account_info
+    return {'balance': initial_balance, 'buying_power': float(account.buying_power), 'history': order_history}
 
 if __name__ == '__main__':
-    top_picks, dashboard_market, top_picks_dashboard, full_universe_analysis = generate_todays_signals()
-    buy_signals = [item[0] for item in top_picks] if top_picks else []
+    top_picks_details = generate_todays_signals()
+    account_info = execute_live_orders(top_picks_details)
     
-    account_info = execute_live_orders(buy_signals)
-    performance_data = get_performance_comparison(client)
-    
-    # Generation du JSON pour le Dashboard
-    dashboard_data = {
-        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        'account': account_info,
-        'market_data': dashboard_market,
-        'top_picks': top_picks_dashboard,
-        'full_analysis': full_universe_analysis,
-        'performance': performance_data
-    }
-    
-    with open('dashboard_data.json', 'w', encoding='utf-8') as f:
-        json.dump(dashboard_data, f, indent=4, ensure_ascii=False)
+    if account_info and client:
+        perf_data = get_performance_comparison(client)
+        dashboard_data = {
+            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'account': account_info,
+            'top_picks': top_picks_details,
+            'performance': perf_data
+        }
+        with open('dashboard_data.json', 'w', encoding='utf-8') as f:
+            json.dump(dashboard_data, f, indent=4, ensure_ascii=False)
+        print("\n[OK] Donnees JSON exportees pour l'Application Mobile QuickBooks.")
         
-    print("\n[OK] Donnees du Dashboard exportees (dashboard_data.json)")
     print("Termine pour aujourd'hui ! Le robot a ferme ses portes.")
