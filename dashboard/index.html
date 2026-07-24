@@ -120,6 +120,12 @@
 
             <!-- TAB 3: ACTIVITY -->
             <div id="tab-activity" class="tab-content">
+                <div class="card" style="border-color: var(--accent);">
+                    <div class="list-header" style="color:var(--accent);">Ordres en Attente (Décisions du Bot pour Demain 9h30)</div>
+                    <div id="pending-orders-list">
+                        <div style="color:var(--text-muted); font-size:14px;">Aucun ordre en attente.</div>
+                    </div>
+                </div>
                 <div class="card">
                     <div class="list-header">Derniers Trades Exécutés</div>
                     <div id="activity-list"></div>
@@ -292,6 +298,32 @@
         // ================= ACTIVITY TAB =================
         async function loadActivityTab() {
             try {
+                // 1. Ordres en attente (Décisions prises par le bot ce soir, pour exécution demain)
+                const pending = await alpacaFetch('/v2/orders?status=open');
+                const pList = document.getElementById('pending-orders-list');
+                pList.innerHTML = '';
+                if(pending.length === 0) {
+                    pList.innerHTML = '<div style="color:var(--text-muted); font-size:14px; padding:10px 0;">Le bot est 100% aligné, aucun nouvel achat/vente prévu.</div>';
+                } else {
+                    pending.forEach(o => {
+                        const isBuy = o.side === 'buy';
+                        const qtyText = o.qty ? `${o.qty} parts` : (o.notional ? `$${parseFloat(o.notional).toFixed(2)}` : 'N/A');
+                        pList.innerHTML += `
+                            <div class="item">
+                                <div class="item-left">
+                                    <span class="item-ticker"><span style="font-size:12px;">${isBuy ? '🟢 ACHAT' : '🔴 VENTE'}</span> ${o.symbol}</span>
+                                    <span class="item-sub">Sera exécuté à l'ouverture</span>
+                                </div>
+                                <div class="item-right">
+                                    <span class="val-sm" style="color:var(--accent);">En attente</span><br>
+                                    <span class="item-sub">${qtyText}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                // 2. Historique des trades passés
                 const acts = await alpacaFetch('/v2/account/activities/FILL');
                 const list = document.getElementById('activity-list');
                 list.innerHTML = '';
