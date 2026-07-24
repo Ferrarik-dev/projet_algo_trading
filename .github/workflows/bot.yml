@@ -3,8 +3,8 @@ name: Robot Trading Quotidien (V7 Pro Alpaca)
 on:
   schedule:
     # Exécution du mardi au samedi à 01h45 UTC 
-    # (Correspond à 21h45 Heure de l'Est la veille au soir en été)
-    - cron: '45 1 * * 2-6'
+    # Exécution à 01h38 UTC pour éviter les files d'attente de GitHub (qui sont à 00, 15, 30, 45)
+    - cron: '38 1 * * 2-6'
   workflow_dispatch: # Permet de le lancer manuellement via un bouton sur GitHub
 
 jobs:
