@@ -3,97 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>QuantBook - Portfolio</title>
-    <link rel="stylesheet" href="style.css">
+    <title>QuantBook Mobile</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <!-- Header -->
-    <header class="app-header">
-        <button class="icon-btn"><ion-icon name="menu-outline"></ion-icon></button>
-        <h1 class="logo">QuantBook</h1>
-        <div class="profile-pic">EL</div>
+    <header class="top-header">
+        <div class="logo">QuantBook</div>
+        <div class="header-status">
+            <span class="status-dot"></span> Live
+        </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="app-content">
-        
-        <!-- Account Balance Card -->
-        <section class="card balance-card">
-            <h2 class="card-title">Solde Total</h2>
-            <div class="balance-amount" id="account-balance">$0.00</div>
-            <div class="balance-trend" id="trend-container">
-                <ion-icon name="arrow-up-outline" id="trend-icon"></ion-icon>
-                <span id="bot-perf">0.00%</span> <span class="trend-label">ce mois-ci</span>
-            </div>
-            
-            <div class="divider"></div>
-            
-            <div class="buying-power-row">
-                <span class="bp-label">Pouvoir d'achat disponible</span>
-                <span class="bp-value" id="buying-power">$0.00</span>
-            </div>
-        </section>
+    <!-- TAB 1 : ACCUEIL -->
+    <main id="tab-home" class="tab-content active">
+        <div class="balance-card">
+            <h2 class="balance-title">Solde Total</h2>
+            <div class="balance-amount" id="total-balance">$0.00</div>
+            <div class="balance-subtitle">Pouvoir d'achat : <span id="buying-power">$0.00</span></div>
+            <div class="update-time" id="last-update">--</div>
+        </div>
 
-        <!-- Benchmark Comparison Chart -->
-        <section class="card chart-card">
-            <div class="card-header-row">
-                <h2 class="card-title">Performance vs S&P 500</h2>
-                <button class="more-btn"><ion-icon name="ellipsis-vertical"></ion-icon></button>
+        <div class="section-title">Investissements Top 3</div>
+        <div class="list-container" id="top-picks-list">
+            <!-- Injecté via JS -->
+        </div>
+
+        <div class="section-title">Derniers Ordres Exécutés</div>
+        <div class="list-container" id="history-list">
+            <!-- Injecté via JS -->
+        </div>
+    </main>
+
+    <!-- TAB 2 : ACTIFS (Univers Complet) -->
+    <main id="tab-assets" class="tab-content">
+        <div class="section-title">Analyse du S&P 500 (Univers IA)</div>
+        <div class="table-container">
+            <table class="qb-table">
+                <thead>
+                    <tr>
+                        <th>Actif</th>
+                        <th class="right">Prix</th>
+                        <th class="right">Var. 1J</th>
+                        <th class="right">Prédiction</th>
+                        <th class="right">RSI</th>
+                        <th class="right">MACD</th>
+                    </tr>
+                </thead>
+                <tbody id="universe-table-body">
+                    <!-- Injecté via JS -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- TAB 3 : GRAPHIQUES (Performance & S&P500) -->
+    <main id="tab-charts" class="tab-content">
+        <div class="chart-card">
+            <div class="chart-header-row">
+                <h3 class="chart-title">Comparatif IA vs S&P 500</h3>
+                <select id="date-reset-select" class="qb-select">
+                    <option value="all">Depuis l'origine</option>
+                    <option value="6M">Depuis 6 Mois</option>
+                    <option value="1M" selected>Depuis 1 Mois</option>
+                    <option value="5D">Depuis 5 Jours</option>
+                </select>
+            </div>
+            <div class="chart-subtitle" id="chart-comparison-subtitle">Simulation : Et si cet argent était dans le S&P 500 ?</div>
+            <div class="chart-container">
+                <canvas id="performanceChart"></canvas>
+            </div>
+            <div class="perf-metrics" id="perf-metrics-div">
+                <!-- Dynamique -->
+            </div>
+        </div>
+        
+        <div class="chart-card mt-3">
+            <div class="chart-header-row">
+                <h3 class="chart-title">Prix Brut S&P 500</h3>
             </div>
             <div class="chart-container">
-                <canvas id="perfChart"></canvas>
+                <canvas id="spyChart"></canvas>
             </div>
-        </section>
-
-        <!-- Top Picks List -->
-        <section class="card picks-card">
-            <div class="card-header-row">
-                <h2 class="card-title">Top Achats IA</h2>
-                <span class="badge" id="picks-count">3</span>
-            </div>
-            
-            <div class="list-container" id="top-picks-list">
-                <div class="loading-text">Chargement des données...</div>
-            </div>
-        </section>
-
-        <!-- Recent Transactions -->
-        <section class="card history-card" style="margin-bottom: 90px;">
-            <div class="card-header-row">
-                <h2 class="card-title">Historique des Ordres</h2>
-                <button class="more-btn"><ion-icon name="filter-outline"></ion-icon></button>
-            </div>
-            
-            <div class="list-container" id="history-list">
-                <div class="loading-text">Chargement des données...</div>
-            </div>
-        </section>
-
+        </div>
     </main>
 
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
-        <a href="#" class="nav-item active">
-            <ion-icon name="home"></ion-icon>
+        <div class="nav-item active" data-target="tab-home">
+            <div class="nav-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            </div>
             <span>Accueil</span>
-        </a>
-        <a href="#" class="nav-item">
-            <ion-icon name="pie-chart-outline"></ion-icon>
+        </div>
+        <div class="nav-item" data-target="tab-assets">
+            <div class="nav-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+            </div>
             <span>Actifs</span>
-        </a>
-        <a href="#" class="nav-item">
-            <ion-icon name="swap-horizontal-outline"></ion-icon>
-            <span>Ordres</span>
-        </a>
-        <a href="#" class="nav-item">
-            <ion-icon name="settings-outline"></ion-icon>
-            <span>Réglages</span>
-        </a>
+        </div>
+        <div class="nav-item" data-target="tab-charts">
+            <div class="nav-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            </div>
+            <span>Performance</span>
+        </div>
     </nav>
 
     <script src="app.js"></script>

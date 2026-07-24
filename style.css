@@ -1,242 +1,314 @@
-/* Intuit / QuickBooks Design System Colors */
 :root {
     --qb-green: #2CA01C;
-    --qb-green-hover: #238016;
-    --qb-blue: #0077C5;
+    --qb-green-hover: #108000;
     --qb-bg: #F4F5F8;
-    --qb-text-main: #393A3D;
-    --qb-text-muted: #6B6C72;
-    --qb-card-bg: #FFFFFF;
+    --qb-text-dark: #393A3D;
+    --qb-text-light: #6B6C72;
+    --qb-white: #FFFFFF;
     --qb-border: #D4D7DC;
-    --qb-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    
-    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --qb-red: #D32F2F;
+    --qb-red-bg: #FCE8E8;
+    --qb-green-bg: #E8F5E9;
+    --qb-blue: #0077C5;
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 body {
     background-color: var(--qb-bg);
-    color: var(--qb-text-main);
-    font-family: var(--font-family);
+    color: var(--qb-text-dark);
     -webkit-font-smoothing: antialiased;
+    padding-bottom: 70px; /* Space for bottom nav */
 }
 
 /* Header */
-.app-header {
-    background-color: var(--qb-card-bg);
-    height: 60px;
+.top-header {
+    background-color: var(--qb-white);
+    padding: 16px 20px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    padding: 0 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    align-items: center;
+    border-bottom: 1px solid var(--qb-border);
     position: sticky;
     top: 0;
     z-index: 100;
 }
 
-.icon-btn {
-    background: none;
-    border: none;
-    font-size: 28px;
-    color: var(--qb-text-main);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-}
-
 .logo {
-    font-size: 18px;
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--qb-green);
     letter-spacing: -0.5px;
 }
 
-.profile-pic {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
+.header-status {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--qb-text-light);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
     background-color: var(--qb-green);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 600;
+    border-radius: 50%;
+    margin-right: 6px;
+    box-shadow: 0 0 0 3px var(--qb-green-bg);
 }
 
-/* Content Layout */
-.app-content {
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+/* Tabs */
+.tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease-in-out;
+}
+.tab-content.active {
+    display: block;
 }
 
-/* Cards */
-.card {
-    background-color: var(--qb-card-bg);
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: var(--qb-shadow);
-    border: 1px solid var(--qb-border);
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.card-title {
-    font-size: 14px;
-    color: var(--qb-text-muted);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 12px;
-}
-
-.card-header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-}
-
-.card-header-row .card-title {
-    margin-bottom: 0;
-}
-
-.more-btn {
-    background: none;
-    border: none;
-    color: var(--qb-text-muted);
-    font-size: 20px;
-    cursor: pointer;
-}
-
-/* Balance Card Specifics */
+/* Balance Card */
 .balance-card {
+    background-color: var(--qb-white);
+    padding: 24px 20px;
     text-align: center;
-    padding-top: 24px;
-    padding-bottom: 24px;
+    border-bottom: 1px solid var(--qb-border);
+    margin-bottom: 24px;
+}
+
+.balance-title {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: var(--qb-text-light);
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
 }
 
 .balance-amount {
-    font-size: 36px;
+    font-size: 2.5rem;
     font-weight: 700;
-    color: var(--qb-text-main);
+    color: var(--qb-text-dark);
     margin-bottom: 8px;
     letter-spacing: -1px;
 }
 
-.balance-trend {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    font-size: 14px;
-    font-weight: 600;
+.balance-subtitle {
+    font-size: 0.95rem;
+    color: var(--qb-text-light);
+    margin-bottom: 12px;
 }
 
-.balance-trend.positive { color: var(--qb-green); }
-.balance-trend.negative { color: #E33E38; } /* QuickBooks Red */
-.balance-trend.neutral { color: var(--qb-text-muted); }
-
-.trend-label {
-    color: var(--qb-text-muted);
-    font-weight: 400;
-}
-
-.divider {
-    height: 1px;
-    background-color: var(--qb-border);
-    margin: 20px 0;
-}
-
-.buying-power-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
-}
-.bp-label { color: var(--qb-text-muted); }
-.bp-value { font-weight: 600; }
-
-/* Chart */
-.chart-container {
-    width: 100%;
-    height: 200px;
-    position: relative;
-}
-
-/* Lists */
-.badge {
+.update-time {
+    font-size: 0.75rem;
+    color: var(--qb-text-light);
+    display: inline-block;
+    padding: 4px 10px;
     background-color: var(--qb-bg);
-    color: var(--qb-text-main);
-    font-size: 12px;
-    font-weight: 600;
-    padding: 4px 8px;
     border-radius: 12px;
-    border: 1px solid var(--qb-border);
+}
+
+/* Sections */
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 0 20px;
+    margin-bottom: 12px;
+    color: var(--qb-text-dark);
 }
 
 .list-container {
-    display: flex;
-    flex-direction: column;
+    background-color: var(--qb-white);
+    border-top: 1px solid var(--qb-border);
+    border-bottom: 1px solid var(--qb-border);
+    margin-bottom: 32px;
 }
 
+/* List Items (Top Picks & History) */
 .list-item {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--qb-bg);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--qb-border);
 }
+
 .list-item:last-child {
     border-bottom: none;
-    padding-bottom: 0;
 }
 
-.item-left {
+.item-left, .item-right {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-}
-
-.item-title {
-    font-weight: 600;
-    font-size: 16px;
-}
-
-.item-subtitle {
-    font-size: 12px;
-    color: var(--qb-text-muted);
 }
 
 .item-right {
     text-align: right;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+}
+
+.item-title {
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin-bottom: 4px;
+}
+
+.item-subtitle {
+    font-size: 0.85rem;
+    color: var(--qb-text-light);
 }
 
 .item-value {
     font-weight: 600;
-    font-size: 15px;
+    font-size: 1.05rem;
+    margin-bottom: 4px;
 }
 
 .item-subvalue {
-    font-size: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 0.85rem;
+}
+
+/* Colors */
+.text-green { color: var(--qb-green); }
+.text-red { color: var(--qb-red); }
+.text-neutral { color: var(--qb-text-light); }
+
+.badge-green {
+    background-color: var(--qb-green-bg);
+    color: var(--qb-green);
+    padding: 2px 6px;
+    border-radius: 4px;
     font-weight: 600;
 }
-.item-subvalue.positive { color: var(--qb-green); }
-.item-subvalue.negative { color: #E33E38; }
+.badge-red {
+    background-color: var(--qb-red-bg);
+    color: var(--qb-red);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
 
-.loading-text {
-    color: var(--qb-text-muted);
-    font-size: 14px;
+/* Tables (Assets Tab) */
+.table-container {
+    background-color: var(--qb-white);
+    border-top: 1px solid var(--qb-border);
+    border-bottom: 1px solid var(--qb-border);
+    overflow-x: auto;
+}
+
+.qb-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.qb-table th {
+    text-align: left;
+    padding: 12px 16px;
+    color: var(--qb-text-light);
+    font-weight: 500;
+    border-bottom: 1px solid var(--qb-border);
+    background-color: #FAFAFA;
+}
+
+.qb-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--qb-border);
+    color: var(--qb-text-dark);
+}
+
+.qb-table th.right, .qb-table td.right {
+    text-align: right;
+}
+
+.qb-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Charts Tab */
+.chart-card {
+    background-color: var(--qb-white);
+    padding: 20px;
+    border-top: 1px solid var(--qb-border);
+    border-bottom: 1px solid var(--qb-border);
+}
+
+.mt-3 {
+    margin-top: 24px;
+}
+
+.chart-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.chart-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.qb-select {
+    padding: 4px 8px;
+    border: 1px solid var(--qb-border);
+    border-radius: 4px;
+    background-color: var(--qb-white);
+    font-size: 0.85rem;
+    color: var(--qb-text-dark);
+}
+
+.chart-subtitle {
+    font-size: 0.85rem;
+    color: var(--qb-text-light);
+    margin-bottom: 16px;
+}
+
+.chart-container {
+    width: 100%;
+    height: 250px;
+    position: relative;
+}
+
+.perf-metrics {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--qb-border);
+}
+
+.perf-metric {
     text-align: center;
-    padding: 20px 0;
+}
+
+.perf-metric-title {
+    font-size: 0.75rem;
+    color: var(--qb-text-light);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.perf-metric-val {
+    font-size: 1.1rem;
+    font-weight: 600;
 }
 
 /* Bottom Navigation */
@@ -245,11 +317,10 @@ body {
     bottom: 0;
     left: 0;
     width: 100%;
-    background-color: var(--qb-card-bg);
+    background-color: var(--qb-white);
     display: flex;
     justify-content: space-around;
-    padding: 12px 0 20px 0; /* Extra padding for iOS home indicator */
-    box-shadow: 0 -1px 10px rgba(0,0,0,0.05);
+    padding: 10px 0;
     border-top: 1px solid var(--qb-border);
     z-index: 100;
 }
@@ -258,17 +329,22 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    text-decoration: none;
-    color: var(--qb-text-muted);
-    font-size: 11px;
+    color: var(--qb-text-light);
+    font-size: 0.75rem;
     font-weight: 500;
-}
-
-.nav-item ion-icon {
-    font-size: 24px;
+    cursor: pointer;
+    transition: color 0.2s;
+    flex: 1;
 }
 
 .nav-item.active {
     color: var(--qb-green);
+}
+
+.nav-icon {
+    margin-bottom: 4px;
+}
+
+.nav-item:active {
+    transform: scale(0.95);
 }

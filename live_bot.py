@@ -123,9 +123,17 @@ def generate_todays_signals():
     
     print("GENERATION DES PREDICTIONS POUR AUJOURD'HUI...")
     predictions = []
+    full_universe_analysis = []
     
     for ticker, df in all_features.items():
         row = df.iloc[-1]
+        
+        df_raw = data_dict[ticker]
+        last_close = df_raw['Close'].iloc[-1]
+        prev_close = df_raw['Close'].iloc[-2]
+        change_pct = ((last_close / prev_close) - 1) * 100
+        
+        pred_return = 0
         if not row[features_list].isnull().any():
             X_today = pd.DataFrame([row[features_list]])
             pred_return = model.predict(X_today)[0]
@@ -133,8 +141,19 @@ def generate_todays_signals():
             if pred_return > 0: # On ne s'interesse qu'aux actions prevues a la hausse pour le Top 3
                 predictions.append((ticker, pred_return))
                 
+        full_universe_analysis.append({
+            'ticker': ticker,
+            'price': float(last_close),
+            'change_pct': float(change_pct),
+            'rsi': float(row['RSI_14']) if not pd.isna(row['RSI_14']) else 0.0,
+            'macd': float(row['MACD']) if not pd.isna(row['MACD']) else 0.0,
+            'volatility': float(row['Vol_21d'] * 100) if not pd.isna(row['Vol_21d']) else 0.0,
+            'pred_return': float(pred_return * 100)
+        })
+                
     # Classement
     predictions.sort(key=lambda x: x[1], reverse=True)
+    full_universe_analysis.sort(key=lambda x: x['pred_return'], reverse=True)
     top_picks = predictions[:TOP_N]
     
     print("\n--- ANALYSE NLP FINBERT (Mode Alerte) ---")
@@ -184,7 +203,7 @@ def generate_todays_signals():
             })
             
     print("-" * 45)
-    return top_picks_details
+    return top_picks_details, full_universe_analysis
 
 
 
@@ -202,7 +221,7 @@ def get_performance_comparison(alpaca_client):
         
     print("\nEtape 4 : Calcul des performances (Bot vs S&P 500)...")
     try:
-        req = GetPortfolioHistoryRequest(period="1M", timeframe="1D")
+        req = GetPortfolioHistoryRequest(period="all", timeframe="1D")
         history = alpaca_client.get_portfolio_history(req)
         
         if not history.timestamp or len(history.timestamp) == 0:
@@ -350,9 +369,17 @@ def execute_live_orders(top_picks_details):
             val = investments.get(ticker, 0.0)
             price = prices.get(ticker, 0.0)
             
+            unrealized_pl = 0.0
+            for pos in new_positions:
+                if pos.symbol == ticker:
+                    unrealized_pl = float(pos.unrealized_pl)
+                    break
+            
             # Injection pour l'export JSON
             pick['price'] = price
             pick['pred_return'] = pred * 100
+            pick['unrealized_pl'] = unrealized_pl
+            pick['portfolio_pct'] = (val / initial_balance) * 100 if initial_balance > 0 else 0
             
             telegram_msg += (
                 f"#{rank} *{ticker}*\n"
@@ -384,7 +411,7 @@ def execute_live_orders(top_picks_details):
     return {'balance': initial_balance, 'buying_power': float(account.buying_power), 'history': order_history}
 
 if __name__ == '__main__':
-    top_picks_details = generate_todays_signals()
+    top_picks_details, full_universe_analysis = generate_todays_signals()
     account_info = execute_live_orders(top_picks_details)
     
     if account_info and client:
@@ -393,6 +420,7 @@ if __name__ == '__main__':
             'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             'account': account_info,
             'top_picks': top_picks_details,
+            'full_analysis': full_universe_analysis,
             'performance': perf_data
         }
         with open('dashboard_data.json', 'w', encoding='utf-8') as f:
