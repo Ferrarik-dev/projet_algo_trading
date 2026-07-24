@@ -1,0 +1,95 @@
+{
+    "date": "2026-07-24 00:48:47",
+    "predictions": [
+        {
+            "ticker": "ETH-USD",
+            "probability": 0.44437211751937866,
+            "regime_ok": false,
+            "sector": "CRYPTO"
+        },
+        {
+            "ticker": "LINK-USD",
+            "probability": 0.3051183223724365,
+            "regime_ok": false,
+            "sector": "CRYPTO"
+        },
+        {
+            "ticker": "ADA-USD",
+            "probability": 0.4435897171497345,
+            "regime_ok": false,
+            "sector": "CRYPTO"
+        },
+        {
+            "ticker": "XRP-USD",
+            "probability": 0.34143370389938354,
+            "regime_ok": false,
+            "sector": "CRYPTO"
+        },
+        {
+            "ticker": "LTC-USD",
+            "probability": 0.5818029642105103,
+            "regime_ok": false,
+            "sector": "CRYPTO"
+        },
+        {
+            "ticker": "ENPH",
+            "probability": 0.31580838561058044,
+            "regime_ok": true,
+            "sector": "MIDCAPS"
+        },
+        {
+            "ticker": "OKTA",
+            "probability": 0.4253787398338318,
+            "regime_ok": true,
+            "sector": "MIDCAPS"
+        },
+        {
+            "ticker": "CCJ",
+            "probability": 0.30850061774253845,
+            "regime_ok": true,
+            "sector": "MIDCAPS"
+        },
+        {
+            "ticker": "MDB",
+            "probability": 0.5380163788795471,
+            "regime_ok": true,
+            "sector": "MIDCAPS"
+        },
+        {
+            "ticker": "SHOP",
+            "probability": 0.5929416418075562,
+            "regime_ok": true,
+            "sector": "MIDCAPS"
+        },
+        {
+            "ticker": "GLD",
+            "probability": 0.5606846809387207,
+            "regime_ok": true,
+            "sector": "COMMODITIES"
+        },
+        {
+            "ticker": "SLV",
+            "probability": 0.5031487345695496,
+            "regime_ok": true,
+            "sector": "COMMODITIES"
+        },
+        {
+            "ticker": "USO",
+            "probability": 0.32821759581565857,
+            "regime_ok": true,
+            "sector": "COMMODITIES"
+        },
+        {
+            "ticker": "WEAT",
+            "probability": 0.2919933795928955,
+            "regime_ok": true,
+            "sector": "COMMODITIES"
+        },
+        {
+            "ticker": "CPER",
+            "probability": 0.3718339502811432,
+            "regime_ok": true,
+            "sector": "COMMODITIES"
+        }
+    ]
+}
