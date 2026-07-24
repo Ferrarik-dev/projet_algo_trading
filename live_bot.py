@@ -8,7 +8,7 @@ import os
 from dotenv import load_dotenv
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import MarketOrderRequest, GetOrdersRequest, GetPortfolioHistoryRequest
-from alpaca.trading.enums import OrderSide, TimeInForce, OrderStatus, TimeFrame
+from alpaca.trading.enums import OrderSide, TimeInForce, OrderStatus
 import warnings
 import json
 import requests
@@ -232,8 +232,8 @@ def get_performance_comparison(alpaca_client):
         
     print("\nEtape 4 : Calcul des performances (Bot vs S&P 500)...")
     try:
-        # Recuperation de l'historique du compte sur 1 mois (TimeFrame.Day n'est parfois pas supporte en str)
-        req = GetPortfolioHistoryRequest(period="1M", timeframe=TimeFrame.Day)
+        # Recuperation de l'historique du compte sur 1 mois
+        req = GetPortfolioHistoryRequest(period="1M", timeframe="1D")
         history = alpaca_client.get_portfolio_history(req)
         
         if not history.timestamp or len(history.timestamp) == 0:
