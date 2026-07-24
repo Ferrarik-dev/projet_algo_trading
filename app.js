@@ -1,7 +1,7 @@
 async function loadDashboardData() {
     try {
-        // En prod, ajouter un cache buster: fetch(`dashboard_data.json?t=${new Date().getTime()}`)
-        const response = await fetch('dashboard_data.json');
+        // Cache buster pour forcer GitHub Pages à charger la toute dernière version du JSON
+        const response = await fetch(`dashboard_data.json?t=${new Date().getTime()}`);
         if (!response.ok) throw new Error("Fichier de données introuvable");
         const data = await response.json();
 
@@ -12,6 +12,10 @@ async function loadDashboardData() {
         
         if (data.account && data.account.history) {
             updateHistory(data.account.history);
+        }
+        
+        if (data.performance) {
+            updatePerformance(data.performance);
         }
         
         if (data.full_analysis) {
@@ -197,6 +201,87 @@ function updateAnalysisTable(analysisData) {
             <td>${asset.volatility.toFixed(2)}%</td>
         `;
         tbody.appendChild(tr);
+    });
+}
+
+let perfChartInstance = null;
+
+function updatePerformance(perfData) {
+    if (!perfData || !perfData.timestamps || perfData.timestamps.length === 0) return;
+    
+    const botPerf = document.getElementById('bot-perf');
+    const spyPerf = document.getElementById('spy-perf');
+    
+    const botVal = perfData.bot_return_pct;
+    const spyVal = perfData.spy_return_pct;
+    
+    botPerf.innerText = (botVal >= 0 ? '+' : '') + botVal.toFixed(2) + '%';
+    botPerf.style.color = botVal >= 0 ? 'var(--color-up)' : 'var(--color-down)';
+    
+    spyPerf.innerText = (spyVal >= 0 ? '+' : '') + spyVal.toFixed(2) + '%';
+    spyPerf.style.color = spyVal >= 0 ? 'var(--color-up)' : 'var(--color-down)';
+    
+    const ctx = document.getElementById('perfChart').getContext('2d');
+    
+    if (perfChartInstance) {
+        perfChartInstance.destroy();
+    }
+    
+    perfChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: perfData.timestamps,
+            datasets: [
+                {
+                    label: 'QuantBot IA (Base 100)',
+                    data: perfData.bot_equity,
+                    borderColor: '#06b6d4',
+                    backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true,
+                    pointRadius: 0,
+                    pointHoverRadius: 4
+                },
+                {
+                    label: 'S&P 500 Benchmark',
+                    data: perfData.spy_equity,
+                    borderColor: '#fbbf24',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    tension: 0.3,
+                    fill: false,
+                    pointRadius: 0,
+                    pointHoverRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    labels: { color: '#94a3b8' }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)'
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#94a3b8', maxTicksLimit: 8 }
+                },
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#94a3b8' }
+                }
+            }
+        }
     });
 }
 

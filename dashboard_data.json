@@ -121,7 +121,7 @@
             "nlp_alert": "NEUTRE: Score Media (0.00).",
             "headlines": [
                 "Stock market today: Dow, S&P 500, Nasdaq recover as oil eases, new Trump tariffs take effect",
-                "Elon Musk’s trillion-dollar meltdown: How SpaceX and Tesla erased $700 billion",
+                "Elon Musk\u2019s trillion-dollar meltdown: How SpaceX and Tesla erased $700 billion",
                 "2 Growth Stocks with All-Star Potential and 1 We Find Risky",
                 "Cathie Wood Adds $50 Million Of Tesla Stock After 15% Drop",
                 "Waymo Lead Over Tesla Jumps"
@@ -269,5 +269,30 @@
             "macd": 12.637089770186776,
             "volatility": 1.5968017473115568
         }
-    ]
+    ],
+    "performance": {
+        "timestamps": [
+            "2026-06-24",
+            "2026-07-01",
+            "2026-07-08",
+            "2026-07-15",
+            "2026-07-24"
+        ],
+        "bot_equity": [
+            100,
+            102.5,
+            101.8,
+            104.2,
+            105.1
+        ],
+        "spy_equity": [
+            100,
+            101.1,
+            100.5,
+            101.9,
+            102.3
+        ],
+        "bot_return_pct": 5.1,
+        "spy_return_pct": 2.3
+    }
 }

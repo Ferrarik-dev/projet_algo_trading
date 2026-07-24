@@ -7,9 +7,8 @@ from transformers import pipeline
 import os
 from dotenv import load_dotenv
 from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import MarketOrderRequest
-from alpaca.trading.enums import OrderSide, TimeInForce, OrderStatus
-from alpaca.trading.requests import GetOrdersRequest
+from alpaca.trading.requests import MarketOrderRequest, GetOrdersRequest, GetPortfolioHistoryRequest
+from alpaca.trading.enums import OrderSide, TimeInForce, OrderStatus, TimeFrame
 import warnings
 import json
 import requests
@@ -219,6 +218,71 @@ def generate_todays_signals():
     print("-" * 45)
     return top_picks, dashboard_market, top_picks_dashboard, full_universe_analysis
 
+def get_performance_comparison(alpaca_client):
+    perf_data = {
+        'timestamps': [],
+        'bot_equity': [],
+        'spy_equity': [],
+        'bot_return_pct': 0.0,
+        'spy_return_pct': 0.0
+    }
+    
+    if alpaca_client is None:
+        return perf_data
+        
+    print("\nEtape 4 : Calcul des performances (Bot vs S&P 500)...")
+    try:
+        # Recuperation de l'historique du compte sur 1 mois (TimeFrame.Day n'est parfois pas supporte en str)
+        req = GetPortfolioHistoryRequest(period="1M", timeframe=TimeFrame.Day)
+        history = alpaca_client.get_portfolio_history(req)
+        
+        if not history.timestamp or len(history.timestamp) == 0:
+            return perf_data
+            
+        timestamps = history.timestamp
+        equity = history.equity
+        
+        # Convertir les timestamps Unix en format YYYY-MM-DD
+        date_strs = [datetime.fromtimestamp(ts).strftime('%Y-%m-%d') for ts in timestamps]
+        start_date = date_strs[0]
+        
+        # Ajouter 1 jour a la date de fin pour etre inclusif dans yfinance
+        end_date_obj = datetime.strptime(date_strs[-1], '%Y-%m-%d') + pd.Timedelta(days=1)
+        end_date = end_date_obj.strftime('%Y-%m-%d')
+        
+        # Telechargement SPY
+        spy = yf.download('SPY', start=start_date, end=end_date, progress=False)
+        if isinstance(spy.columns, pd.MultiIndex):
+            spy.columns = spy.columns.droplevel(1)
+            
+        if spy.empty:
+            return perf_data
+            
+        initial_bot_equity = equity[0]
+        initial_spy_price = spy['Close'].iloc[0]
+        
+        # Normalisation en Base 100
+        bot_normalized = [(e / initial_bot_equity) * 100 for e in equity]
+        spy_normalized = []
+        
+        for d in date_strs:
+            if d in spy.index.strftime('%Y-%m-%d'):
+                price = spy.loc[d, 'Close']
+                spy_normalized.append((price / initial_spy_price) * 100)
+            else:
+                spy_normalized.append(spy_normalized[-1] if len(spy_normalized) > 0 else 100)
+                
+        perf_data['timestamps'] = date_strs
+        perf_data['bot_equity'] = bot_normalized
+        perf_data['spy_equity'] = spy_normalized
+        perf_data['bot_return_pct'] = ((equity[-1] / initial_bot_equity) - 1) * 100
+        perf_data['spy_return_pct'] = (spy_normalized[-1] - 100)
+        
+    except Exception as e:
+        print(f"Erreur calcul de performance : {e}")
+        
+    return perf_data
+
 def format_ticker_for_alpaca(ticker):
     # Les actions standards n'ont pas besoin de formatage particulier
     return ticker
@@ -315,6 +379,7 @@ if __name__ == '__main__':
     buy_signals = [item[0] for item in top_picks] if top_picks else []
     
     account_info = execute_live_orders(buy_signals)
+    performance_data = get_performance_comparison(client)
     
     # Generation du JSON pour le Dashboard
     dashboard_data = {
@@ -322,7 +387,8 @@ if __name__ == '__main__':
         'account': account_info,
         'market_data': dashboard_market,
         'top_picks': top_picks_dashboard,
-        'full_analysis': full_universe_analysis
+        'full_analysis': full_universe_analysis,
+        'performance': performance_data
     }
     
     with open('dashboard_data.json', 'w', encoding='utf-8') as f:
