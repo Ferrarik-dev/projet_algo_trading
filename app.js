@@ -50,6 +50,9 @@ function updateTopPicks(topPicks) {
         const card = document.createElement('div');
         card.className = 'pick-card';
         
+        let finbertColor = pick.nlp_score > 0.2 ? 'var(--color-up)' : (pick.nlp_score < -0.2 ? 'var(--color-down)' : '#94a3b8');
+        let finbertIcon = pick.nlp_score > 0.2 ? '✅' : (pick.nlp_score < -0.2 ? '❌' : '➖');
+        
         card.innerHTML = `
             <div class="pick-header">
                 <span class="rank">${index + 1}</span>
@@ -58,6 +61,9 @@ function updateTopPicks(topPicks) {
             <div class="prediction">
                 <span class="pred-label">Hausse Prévue (5J)</span>
                 <span class="pred-value">+${pick.pred_return.toFixed(2)}%</span>
+            </div>
+            <div style="margin-top: 10px; font-size: 12px; color: ${finbertColor};">
+                ${finbertIcon} Score FinBERT : ${pick.nlp_score.toFixed(2)}
             </div>
         `;
         container.appendChild(card);
