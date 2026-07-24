@@ -1,64 +1,129 @@
 {
-    "timestamp": "2026-07-24 16:15:00",
+    "timestamp": "2026-07-24 16:25:14",
     "account": {
-        "balance": 105234.50,
-        "buying_power": 45100.00
+        "balance": 102779.19,
+        "buying_power": 20555.85
     },
     "market_data": {
-        "AAPL": {"price": 185.30, "change_pct": 1.2},
-        "MSFT": {"price": 420.15, "change_pct": -0.5},
-        "GOOGL": {"price": 145.20, "change_pct": 2.1},
-        "AMZN": {"price": 178.90, "change_pct": 0.8},
-        "META": {"price": 490.50, "change_pct": 3.4},
-        "TSLA": {"price": 195.10, "change_pct": -4.2},
-        "NVDA": {"price": 850.30, "change_pct": 5.1},
-        "JPM": {"price": 190.20, "change_pct": 0.1},
-        "V": {"price": 280.40, "change_pct": 0.5},
-        "WMT": {"price": 60.20, "change_pct": 1.1},
-        "JNJ": {"price": 155.60, "change_pct": -0.8},
-        "PG": {"price": 160.30, "change_pct": 0.2},
-        "MA": {"price": 460.10, "change_pct": 0.4},
-        "HD": {"price": 340.50, "change_pct": -1.2},
-        "CVX": {"price": 165.80, "change_pct": 1.5},
-        "MRK": {"price": 125.40, "change_pct": -0.3},
-        "KO": {"price": 62.10, "change_pct": 0.6},
-        "PEP": {"price": 170.80, "change_pct": -0.1},
-        "BAC": {"price": 38.50, "change_pct": 0.9},
-        "COST": {"price": 720.60, "change_pct": 1.8}
+        "AAPL": {
+            "price": 333.94500732421875,
+            "change_pct": 3.8192512349201735
+        },
+        "MSFT": {
+            "price": 384.9649963378906,
+            "change_pct": 0.8871035915778869
+        },
+        "GOOGL": {
+            "price": 319.7471923828125,
+            "change_pct": 0.6475463267956227
+        },
+        "AMZN": {
+            "price": 233.90989685058594,
+            "change_pct": 0.10694735280323275
+        },
+        "META": {
+            "price": 603.7650146484375,
+            "change_pct": -0.38524352937693296
+        },
+        "TSLA": {
+            "price": 310.7650146484375,
+            "change_pct": -2.791763184588336
+        },
+        "NVDA": {
+            "price": 210.75039672851562,
+            "change_pct": 0.953440445513376
+        },
+        "JPM": {
+            "price": 353.0400085449219,
+            "change_pct": 0.8974034590484958
+        },
+        "V": {
+            "price": 353.8599853515625,
+            "change_pct": 0.6427699683775101
+        },
+        "WMT": {
+            "price": 109.07499694824219,
+            "change_pct": 0.6226894952599649
+        },
+        "JNJ": {
+            "price": 263.0,
+            "change_pct": 1.4386589826759444
+        },
+        "PG": {
+            "price": 147.07009887695312,
+            "change_pct": 0.06810754264041652
+        },
+        "MA": {
+            "price": 535.0050048828125,
+            "change_pct": 0.8891412341995419
+        },
+        "HD": {
+            "price": 330.760009765625,
+            "change_pct": 1.8632066982096074
+        },
+        "CVX": {
+            "price": 194.66000366210938,
+            "change_pct": 0.12344691668781937
+        },
+        "MRK": {
+            "price": 131.2449951171875,
+            "change_pct": 0.5862963018836043
+        },
+        "KO": {
+            "price": 81.86499786376953,
+            "change_pct": 0.8562273136654142
+        },
+        "PEP": {
+            "price": 135.9199981689453,
+            "change_pct": 0.718785655901244
+        },
+        "BAC": {
+            "price": 62.10499954223633,
+            "change_pct": 1.346280645191822
+        },
+        "COST": {
+            "price": 931.8400268554688,
+            "change_pct": 0.6241527883844578
+        }
     },
     "top_picks": [
         {
-            "ticker": "NVDA",
-            "pred_return": 3.45,
-            "nlp_score": 0.65,
-            "nlp_alert": "🟢 FEU VERT: Score Media Positif (0.65).",
+            "ticker": "GOOGL",
+            "pred_return": 1.0103545108575143,
+            "nlp_score": -0.04668483734130859,
+            "nlp_alert": "NEUTRE: Score Media (-0.05).",
             "headlines": [
-                "Nvidia announces breakthrough AI chip",
-                "Earnings expectation raised by analysts",
-                "Why Nvidia is unstoppable"
+                "Stock market today: Dow, S&P 500, Nasdaq recover as oil eases, new Trump tariffs take effect",
+                "Why Big Tech barnings could define the market next week",
+                "Earnings live: American Express, Verizon stocks slip despite earnings beats",
+                "2 reasons why Microsoft belongs in your portfolio: D.A. Davidson's Gil Luria",
+                "3 Stocks Primed to Cash In if Artificial Intelligence (AI) Spending Hits $1 Trillion Next Year"
             ]
         },
         {
-            "ticker": "META",
-            "pred_return": 2.15,
-            "nlp_score": -0.05,
-            "nlp_alert": "⚪ NEUTRE: Score Media (-0.05).",
+            "ticker": "PEP",
+            "pred_return": 0.8428615550554887,
+            "nlp_score": -0.19371217489242554,
+            "nlp_alert": "NEUTRE: Score Media (-0.19).",
             "headlines": [
-                "Meta faces new regulation talks in EU",
-                "Zuckerberg sells 1M shares",
-                "Instagram growth remains steady"
+                "Best Monthly Dividend ETFs for Consistent Income",
+                "I'd Double a Position in These 3 Dividend Stocks Right Now Without Any Hesitation",
+                "Dividend Stock Showdown: Is Coca-Cola or PepsiCo the Better Buy Right Now?",
+                "History Has An Opinion On This CELH Price Level",
+                "Another popular soda giant closes warehouse operation, cuts 184 jobs"
             ]
         },
         {
             "ticker": "TSLA",
-            "pred_return": 1.85,
-            "nlp_score": -0.45,
-            "nlp_alert": "🔴 ATTENTION: Score Media Catastrophique (-0.45). J'AURAIS MIS MON VETO !",
+            "pred_return": 0.725844121300753,
+            "nlp_score": 0.0,
+            "nlp_alert": "NEUTRE: Score Media (0.00).",
             "headlines": [
-                "Tesla misses delivery estimates drastically",
-                "Elon Musk sued by shareholders",
-                "Production halted in Berlin gigafactory",
-                "Tesla slashes prices again in China"
+                "Stock market today: Dow, S&P 500, Nasdaq recover as oil eases, new Trump tariffs take effect",
+                "Elon Musk’s trillion-dollar meltdown: How SpaceX and Tesla erased $700 billion",
+                "2 Growth Stocks with All-Star Potential and 1 We Find Risky",
+                "Cathie Wood Adds $50 Million Of Tesla Stock After 15% Drop",
+                "Waymo Lead Over Tesla Jumps"
             ]
         }
     ]
