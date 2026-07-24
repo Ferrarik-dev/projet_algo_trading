@@ -22,7 +22,7 @@ SECRET_KEY = os.getenv('ALPACA_SECRET_KEY')
 BASE_URL = os.getenv('ALPACA_BASE_URL', 'https://paper-api.alpaca.markets')
 
 print("================================================")
-print("   ROBOT DE TRADING V6 PRO (LIVE MODE)   ")
+print("   ROBOT DE TRADING V7 PRO (LIVE MODE)   ")
 print("================================================")
 
 if not SECRET_KEY or SECRET_KEY == "VOTRE_CLEF_SECRETE_ICI":
