@@ -122,7 +122,7 @@ def prepare_asset_features(df_asset, sector_name, series_sector_bench, series_gl
         df['Fear_Greed'] = series_fng
         df['Fear_Greed'] = df['Fear_Greed'].ffill()
     
-    if sector_name in ['MIDCAPS', 'COMMODITIES'] and not series_vix.empty:
+    if sector_name != 'CRYPTO' and not series_vix.empty:
         df['VIX'] = series_vix
         df['VIX'] = df['VIX'].ffill()
         
@@ -153,14 +153,14 @@ def prepare_asset_features(df_asset, sector_name, series_sector_bench, series_gl
     ema_26 = df['Close'].ewm(span=26, adjust=False).mean()
     df['MACD'] = ema_12 - ema_26
     
-    # La cible pour l'entraînement historique
-    df['Target'] = (df['Close'].shift(-5) > df['Close']).astype(int)
+    # La cible pour l'entraînement historique (Horizon = 15 jours V7 PRO)
+    df['Target'] = (df['Close'].shift(-15) > df['Close']).astype(int)
     
     return df
 
 def generate_todays_signals(data_dict):
     print("\nEtape 2 : Entrainement des IA et Prediction pour Aujourd'hui...")
-    buy_signals = []
+    scored_signals = []
     
     for sector_name, info in SECTORS.items():
         series_sector = data_dict[sector_name]['benchmark']
@@ -179,7 +179,7 @@ def generate_todays_signals(data_dict):
             df = prepare_asset_features(df_raw, sector_name, series_sector, series_global, series_fng, series_vix)
             
             # Séparer l'historique (pour entraîner) de la toute dernière ligne (Aujourd'hui, pour prédire)
-            df_train = df.iloc[:-1].dropna() # On enlève la dernière ligne car elle n'a pas de Target valide (shift -5)
+            df_train = df.iloc[:-1].dropna() # On enlève la dernière ligne car elle n'a pas de Target valide (shift -15)
             df_today = df.iloc[-1:] # La donnée du jour
             
             # S'il manque des données pour aujourd'hui, on ignore
@@ -209,9 +209,17 @@ def generate_todays_signals(data_dict):
             print(f"[{ticker}] Probabilité de Hausse: {prob_today*100:.1f}% | Régime OK: {regime_ok}")
             
             if prob_today > 0.60 and regime_ok:
-                buy_signals.append(ticker)
+                scored_signals.append((ticker, prob_today))
                 
-    return buy_signals
+    # V7 PRO : Trier par probabilité et ne garder que le Top-5 absolu
+    scored_signals.sort(key=lambda x: x[1], reverse=True)
+    top_5 = [item[0] for item in scored_signals[:5]]
+    
+    print(f"\n--- TOP-5 DU JOUR (V7 PRO) ---")
+    for i, item in enumerate(scored_signals[:5]):
+        print(f"{i+1}. {item[0]} ({item[1]*100:.1f}%)")
+        
+    return top_5
 
 def format_ticker_for_alpaca(ticker):
     # Convertit 'ETH-USD' en 'ETHUSD' (ou 'ETH/USD' selon l'API crypto, Alpaca V2 utilise souvent 'ETH/USD')
@@ -234,7 +242,7 @@ def execute_live_orders(buy_signals):
     # 2. Vendre ce qui n'a plus de signal
     for symbol in current_holdings.keys():
         if symbol not in alpaca_buy_signals:
-            print(f"Vente de {symbol} (Plus de signal d'achat)")
+            print(f"Vente de {symbol} (Sorti du Top-5)")
             client.close_position(symbol)
             
     # 3. Acheter les nouveaux signaux
@@ -242,17 +250,23 @@ def execute_live_orders(buy_signals):
         print("Aucun signal d'achat aujourd'hui. L'IA reste en sécurité (Cash).")
         return
         
-    # On calcule la taille de la position (Équipondération stricte V6)
-    account = client.get_account()
-    buying_power = float(account.buying_power)
-    # On utilise 95% du buying power pour garder une marge d'erreur
-    budget_per_asset = (buying_power * 0.95) / len(alpaca_buy_signals)
-    # Alpaca exige que la valeur notionnelle ait maximum 2 décimales
-    budget_per_asset = round(budget_per_asset, 2)
+    # Smart Rebalance V7 PRO : Identifier les NOUVEAUX actifs à acheter
+    new_assets = [s for s in alpaca_buy_signals if s not in current_holdings]
+    
+    if len(new_assets) > 0:
+        account = client.get_account()
+        buying_power = float(account.buying_power)
+        # On utilise 95% du cash disponible, divisé par le nombre de NOUVEAUX actifs à financer
+        budget_per_asset = (buying_power * 0.95) / len(new_assets)
+        budget_per_asset = round(budget_per_asset, 2)
+        print(f"Budget alloué par NOUVEL actif : {budget_per_asset} $")
+    else:
+        print("Tous les actifs du Top-5 sont déjà en portefeuille. Aucun nouvel achat nécessaire.")
+        budget_per_asset = 0
     
     print(f"Budget alloué par actif : {budget_per_asset} $")
     
-    for symbol in alpaca_buy_signals:
+    for symbol in new_assets:
         if symbol not in current_holdings:
             print(f"Achat de {symbol}")
             try:
