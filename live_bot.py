@@ -270,6 +270,13 @@ def format_ticker_for_alpaca(ticker):
 def execute_live_orders(buy_signals):
     print("\nEtape 3 : Execution des Ordres sur Alpaca...")
     
+    # 0. Annuler tous les ordres en attente (evite l'erreur "insufficient qty")
+    try:
+        client.cancel_orders()
+        print("Nettoyage : Tous les anciens ordres en attente ont ete annules.")
+    except Exception as e:
+        print(f"Erreur lors de l'annulation des ordres : {e}")
+    
     # 1. Lister les positions actuelles
     positions = client.get_all_positions()
     current_holdings = {pos.symbol: float(pos.qty) for pos in positions}
