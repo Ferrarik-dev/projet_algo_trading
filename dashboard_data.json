@@ -1,9 +1,14 @@
 {
     "timestamp": "2026-07-24 16:40:32",
     "account": {
-        "balance": 0.0,
-        "buying_power": 0.0,
-        "history": []
+        "balance": 105000.0,
+        "buying_power": 25000.0,
+        "history": [],
+        "allocations": {
+            "GOOGL": 15000.5,
+            "PEP": 10500.25,
+            "TSLA": 12000.0
+        }
     },
     "market_data": {
         "AAPL": {
@@ -99,7 +104,8 @@
                 "Capex fears trigger biggest Tech sell-off since 'Liberation Day'",
                 "Stock Market Midday, July 24: Blue Chip Stocks Rebound as Oil Prices Plunge",
                 "3 Stocks Primed to Cash In if Artificial Intelligence (AI) Spending Hits $1 Trillion Next Year"
-            ]
+            ],
+            "price": 150.25
         },
         {
             "ticker": "PEP",
@@ -112,7 +118,8 @@
                 "Dividend Stock Showdown: Is Coca-Cola or PepsiCo the Better Buy Right Now?",
                 "History Has An Opinion On This CELH Price Level",
                 "Another popular soda giant closes warehouse operation, cuts 184 jobs"
-            ]
+            ],
+            "price": 150.25
         },
         {
             "ticker": "TSLA",
@@ -125,7 +132,8 @@
                 "2 Growth Stocks with All-Star Potential and 1 We Find Risky",
                 "Cathie Wood Adds $50 Million Of Tesla Stock After 15% Drop",
                 "Waymo Lead Over Tesla Jumps"
-            ]
+            ],
+            "price": 150.25
         }
     ],
     "full_analysis": [

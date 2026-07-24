@@ -7,7 +7,7 @@ async function loadDashboardData() {
 
         updateHeader(data.timestamp);
         updateKPIs(data.account);
-        updateTopPicks(data.top_picks);
+        updateTopPicks(data.top_picks, data.account ? data.account.allocations : null);
         updateFinBERT(data.top_picks);
         
         if (data.account && data.account.history) {
@@ -41,7 +41,7 @@ function updateKPIs(account) {
     document.getElementById('buying-power').innerText = formatCurrency(account.buying_power);
 }
 
-function updateTopPicks(topPicks) {
+function updateTopPicks(topPicks, allocations) {
     const container = document.getElementById('top-picks-grid');
     container.innerHTML = '';
 
@@ -49,6 +49,8 @@ function updateTopPicks(topPicks) {
         container.innerHTML = '<p>Aucune action sélectionnée aujourd\'hui.</p>';
         return;
     }
+    
+    const formatCurrency = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
 
     topPicks.forEach((pick, index) => {
         const card = document.createElement('div');
@@ -57,17 +59,22 @@ function updateTopPicks(topPicks) {
         let finbertColor = pick.nlp_score > 0.2 ? 'var(--color-up)' : (pick.nlp_score < -0.2 ? 'var(--color-down)' : '#94a3b8');
         let finbertIcon = pick.nlp_score > 0.2 ? '✅' : (pick.nlp_score < -0.2 ? '❌' : '➖');
         
+        let invested = (allocations && allocations[pick.ticker]) ? formatCurrency(allocations[pick.ticker]) : "$0.00";
+        let priceStr = pick.price ? formatCurrency(pick.price) : "N/A";
+        
         card.innerHTML = `
-            <div class="pick-header">
+            <div class="pick-header" style="display: flex; align-items: center; gap: 10px;">
                 <span class="rank">${index + 1}</span>
                 <span class="ticker">${pick.ticker}</span>
+                <span style="margin-left: auto; font-weight: 600; font-size: 15px;">${priceStr}</span>
             </div>
             <div class="prediction">
                 <span class="pred-label">Hausse Prévue (5J)</span>
                 <span class="pred-value">+${pick.pred_return.toFixed(2)}%</span>
             </div>
-            <div style="margin-top: 10px; font-size: 12px; color: ${finbertColor};">
-                ${finbertIcon} Score FinBERT : ${pick.nlp_score.toFixed(2)}
+            <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 12px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                <span style="color: ${finbertColor};">${finbertIcon} FinBERT: ${pick.nlp_score.toFixed(2)}</span>
+                <span style="color: var(--text-muted);">Investi: <strong style="color: var(--text-main);">${invested}</strong></span>
             </div>
         `;
         container.appendChild(card);

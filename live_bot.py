@@ -205,8 +205,12 @@ def generate_todays_signals():
             print(line_str)
             telegram_msg += line_str + "\n\n"
             
+            # Recuperer le dernier prix pour l'affichage
+            last_p = dashboard_market[ticker]['price'] if ticker in dashboard_market else 0.0
+            
             top_picks_dashboard.append({
                 'ticker': ticker,
+                'price': last_p,
                 'pred_return': float(pred * 100),
                 'nlp_score': float(avg_score),
                 'nlp_alert': nlp_alert,
@@ -305,6 +309,7 @@ def execute_live_orders(buy_signals):
     # 1. Lister les positions actuelles
     positions = client.get_all_positions()
     current_holdings = {pos.symbol: float(pos.qty) for pos in positions}
+    allocations = {pos.symbol: float(pos.market_value) for pos in positions}
     
     print(f"Positions actuellement detenues : {list(current_holdings.keys())}")
     print(f"Nouveaux Signaux d'Achat generes par l'IA : {buy_signals}")
@@ -351,6 +356,7 @@ def execute_live_orders(buy_signals):
             )
             client.submit_order(req)
             print(f" -> Ordre execute : {budget_per_asset:.2f} $ de {symbol}")
+            allocations[symbol] = budget_per_asset
         except Exception as e:
             print(f"Erreur lors de l'achat de {symbol} : {e}")
 
@@ -372,6 +378,7 @@ def execute_live_orders(buy_signals):
         print(f"Erreur recup historique : {e}")
         
     account_info['history'] = order_history
+    account_info['allocations'] = allocations
     return account_info
 
 if __name__ == '__main__':
