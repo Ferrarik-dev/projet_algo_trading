@@ -221,6 +221,25 @@ def generate_todays_signals(data_dict):
         
     return top_5
 
+def send_telegram_notification(message):
+    token = os.getenv('TELEGRAM_BOT_TOKEN')
+    chat_id = os.getenv('TELEGRAM_CHAT_ID')
+    
+    if not token or not chat_id:
+        print("Telegram non configuré. Alerte ignorée.")
+        return
+        
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": message,
+        "parse_mode": "HTML"
+    }
+    try:
+        requests.post(url, json=payload)
+    except Exception as e:
+        print(f"Erreur Telegram: {e}")
+
 def format_ticker_for_alpaca(ticker):
     # Convertit 'ETH-USD' en 'ETHUSD' (ou 'ETH/USD' selon l'API crypto, Alpaca V2 utilise souvent 'ETH/USD')
     if '-USD' in ticker:
@@ -288,4 +307,21 @@ if __name__ == "__main__":
     data_dict = fetch_all_data()
     buy_signals = generate_todays_signals(data_dict)
     execute_live_orders(buy_signals)
+    
+    # Envoi de la notification Telegram
+    try:
+        acc = client.get_account()
+        bal = float(acc.portfolio_value)
+        msg = f"🚀 <b>V7 PRO Exécuté !</b>\n\n"
+        msg += f"💰 <b>Solde :</b> {bal:.2f} $\n"
+        msg += f"🏆 <b>Top-5 du jour :</b>\n"
+        if not buy_signals:
+            msg += "- Aucun (Cash)"
+        else:
+            for s in buy_signals:
+                msg += f"- {s}\n"
+        send_telegram_notification(msg)
+    except Exception as e:
+        print("Impossible d'envoyer la notification:", e)
+        
     print("\nTermine pour aujourd'hui ! Le robot a ferme ses portes.")

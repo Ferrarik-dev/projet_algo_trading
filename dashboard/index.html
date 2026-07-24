@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0e17">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+    <title>V7 PRO Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0a0e17;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent: #00f0ff;
+            --text-main: #ffffff;
+            --text-muted: #8b9bb4;
+            --up-color: #00e676;
+            --down-color: #ff3d00;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-main); padding: 20px; overflow-x: hidden; }
+        
+        .header { text-align: center; margin-bottom: 30px; animation: fadeInDown 0.8s ease; margin-top: 10px;}
+        .header h1 { font-size: 28px; font-weight: 700; background: linear-gradient(90deg, #fff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .balance-title { color: var(--text-muted); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .balance-value { font-size: 42px; font-weight: 700; margin: 5px 0; }
+        .profit { font-size: 16px; font-weight: 500; }
+        .profit.up { color: var(--up-color); }
+        .profit.down { color: var(--down-color); }
+
+        .chart-container { position: relative; height: 250px; width: 100%; }
+
+        .positions-title { font-size: 18px; margin-bottom: 15px; font-weight: 500; }
+        .position-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 0; border-bottom: 1px solid var(--glass-border);
+        }
+        .position-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .ticker { font-size: 18px; font-weight: 700; }
+        .qty { color: var(--text-muted); font-size: 14px; }
+        .pos-value { font-size: 16px; font-weight: 500; text-align: right;}
+
+        .setup-screen { display: flex; flex-direction: column; gap: 15px; }
+        input { 
+            width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.2); color: white; outline: none; font-size: 16px;
+        }
+        button {
+            background: var(--accent); color: #000; font-weight: 700; font-size: 16px;
+            padding: 15px; border: none; border-radius: 12px; cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:active { transform: scale(0.95); }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        #dashboard { display: none; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>V7 PRO</h1>
+    </div>
+
+    <!-- Écran de configuration (S'affiche si pas de clés) -->
+    <div id="setup" class="glass-card setup-screen">
+        <h2 style="margin-bottom: 10px;">Connexion Alpaca</h2>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 10px;">Entrez vos clés Paper Trading. Elles resteront stockées localement sur votre téléphone (100% sécurisé).</p>
+        <input type="text" id="apiKey" placeholder="API Key (ex: PK...)">
+        <input type="password" id="secretKey" placeholder="Secret Key">
+        <button onclick="saveKeys()">Se Connecter</button>
+    </div>
+
+    <!-- Tableau de bord -->
+    <div id="dashboard">
+        <div class="glass-card">
+            <div class="balance-title">Solde Total</div>
+            <div class="balance-value" id="balanceValue">$--.--</div>
+            <div class="profit" id="profitValue">Chargement...</div>
+        </div>
+
+        <div class="glass-card">
+            <div class="chart-container">
+                <canvas id="equityChart"></canvas>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="positions-title">Top-5 Actuel</div>
+            <div id="positionsList">
+                <!-- Les positions seront injectées ici -->
+            </div>
+        </div>
+        
+        <button onclick="logout()" style="background: transparent; border: 1px solid var(--glass-border); color: var(--text-muted); width: 100%; margin-top: 10px;">Déconnexion</button>
+    </div>
+
+    <script>
+        const BASE_URL = 'https://paper-api.alpaca.markets';
+        let chartInstance = null;
+
+        function checkAuth() {
+            if (localStorage.getItem('alpacaKey') && localStorage.getItem('alpacaSecret')) {
+                document.getElementById('setup').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                loadData();
+            } else {
+                document.getElementById('setup').style.display = 'flex';
+                document.getElementById('dashboard').style.display = 'none';
+            }
+        }
+
+        function saveKeys() {
+            const key = document.getElementById('apiKey').value.trim();
+            const secret = document.getElementById('secretKey').value.trim();
+            if (key && secret) {
+                localStorage.setItem('alpacaKey', key);
+                localStorage.setItem('alpacaSecret', secret);
+                checkAuth();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('alpacaKey');
+            localStorage.removeItem('alpacaSecret');
+            checkAuth();
+        }
+
+        async function alpacaFetch(endpoint) {
+            const key = localStorage.getItem('alpacaKey');
+            const secret = localStorage.getItem('alpacaSecret');
+            const response = await fetch(`${BASE_URL}${endpoint}`, {
+                headers: {
+                    'APCA-API-KEY-ID': key,
+                    'APCA-API-SECRET-KEY': secret
+                }
+            });
+            if (!response.ok) {
+                if(response.status === 401) { logout(); alert("Clés invalides !"); }
+                throw new Error("Erreur API");
+            }
+            return response.json();
+        }
+
+        async function loadData() {
+            try {
+                // 1. Account Info
+                const account = await alpacaFetch('/v2/account');
+                const eq = parseFloat(account.equity);
+                const liq = parseFloat(account.last_equity);
+                const diff = eq - liq;
+                const pct = (diff / liq) * 100;
+                
+                document.getElementById('balanceValue').innerText = `$${eq.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+                
+                const pDiv = document.getElementById('profitValue');
+                pDiv.innerText = `${diff >= 0 ? '+' : ''}$${Math.abs(diff).toFixed(2)} (${diff >= 0 ? '+' : ''}${pct.toFixed(2)}%) Aujourd'hui`;
+                pDiv.className = `profit ${diff >= 0 ? 'up' : 'down'}`;
+
+                // 2. Positions
+                const positions = await alpacaFetch('/v2/positions');
+                const list = document.getElementById('positionsList');
+                list.innerHTML = '';
+                if (positions.length === 0) {
+                    list.innerHTML = '<div class="qty">Aucune position (Full Cash)</div>';
+                } else {
+                    positions.forEach(p => {
+                        const val = parseFloat(p.market_value);
+                        const plPct = parseFloat(p.unrealized_intraday_plpc) * 100;
+                        list.innerHTML += `
+                            <div class="position-item">
+                                <div>
+                                    <div class="ticker">${p.symbol}</div>
+                                    <div class="qty">${parseFloat(p.qty).toFixed(4)} parts</div>
+                                </div>
+                                <div class="pos-value">
+                                    <div>$${val.toFixed(2)}</div>
+                                    <div class="${plPct >= 0 ? 'up' : 'down'}" style="font-size:12px; font-weight:700;">${plPct >= 0 ? '+' : ''}${plPct.toFixed(2)}%</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                // 3. Chart History
+                const history = await alpacaFetch('/v2/account/portfolio/history?period=1M&timeframe=1D');
+                drawChart(history.timestamp, history.equity);
+                
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function drawChart(timestamps, equity) {
+            const ctx = document.getElementById('equityChart').getContext('2d');
+            const labels = timestamps.map(t => {
+                const d = new Date(t * 1000);
+                return `${d.getDate()}/${d.getMonth()+1}`;
+            });
+            
+            if (chartInstance) chartInstance.destroy();
+            
+            // Gradient fill
+            let gradient = ctx.createLinearGradient(0, 0, 0, 250);
+            gradient.addColorStop(0, 'rgba(0, 240, 255, 0.4)');
+            gradient.addColorStop(1, 'rgba(0, 240, 255, 0.0)');
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Portfolio',
+                        data: equity,
+                        borderColor: '#00f0ff',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        fill: true,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: { backgroundColor: '#0a0e17', titleColor: '#8b9bb4', bodyColor: '#fff', borderColor: '#00f0ff', borderWidth: 1 }
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false, min: Math.min(...equity) * 0.99, max: Math.max(...equity) * 1.01 }
+                    }
+                }
+            });
+        }
+
+        checkAuth();
+        // Rafraichir toutes les 3 minutes
+        setInterval(() => { if (localStorage.getItem('alpacaKey')) loadData(); }, 180000);
+    </script>
+</body>
+</html>
