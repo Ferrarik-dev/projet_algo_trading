@@ -1,219 +1,219 @@
 {
-    "timestamp": "2026-07-24 23:31:58",
+    "timestamp": "2026-07-25 04:49:57",
     "account": {
-        "balance": 103648.69,
+        "balance": 104335.14,
         "buying_power": 0.0,
         "history": []
     },
     "top_picks": [
         {
             "ticker": "GOOGL",
-            "pred_return": 1.0473379610266207,
-            "nlp_score": -0.44123650789260865,
+            "pred_return": 2.2350919018580244,
+            "nlp_score": -0.2488960862159729,
             "nlp_alert": "ATTENTION (Catastrophique)",
-            "price": 319.4,
-            "unrealized_pl": -178.088139,
-            "portfolio_pct": 125.43223805626486
+            "price": 319.74,
+            "unrealized_pl": -39.694224,
+            "portfolio_pct": 124.73962798918944
         },
         {
-            "ticker": "PEP",
-            "pred_return": 0.8347555266649734,
-            "nlp_score": -0.19371217489242554,
+            "ticker": "MSFT",
+            "pred_return": 1.101160423818846,
+            "nlp_score": 0.1321129322052002,
             "nlp_alert": "NEUTRE",
-            "price": 136.75,
-            "unrealized_pl": 775.720447,
-            "portfolio_pct": 126.35247049142637
+            "price": 0.0,
+            "unrealized_pl": 0.0,
+            "portfolio_pct": 0.0
         },
         {
-            "ticker": "TSLA",
-            "pred_return": 0.7041395327185338,
-            "nlp_score": 0.04378976821899414,
-            "nlp_alert": "NEUTRE",
-            "price": 311.47,
-            "unrealized_pl": 271.868459,
-            "portfolio_pct": 125.86635555258827
+            "ticker": "MRK",
+            "pred_return": 0.7019812917418929,
+            "nlp_score": 0.3213635325431824,
+            "nlp_alert": "FEU VERT (Positif)",
+            "price": 0.0,
+            "unrealized_pl": 0.0,
+            "portfolio_pct": 0.0
         }
     ],
     "full_analysis": [
         {
             "ticker": "GOOGL",
-            "price": 319.739990234375,
-            "change_pct": 0.6452792902561733,
-            "rsi": 42.24360261928077,
-            "macd": -2.081023839930481,
-            "volatility": 2.313637982711177,
-            "pred_return": 1.0473379610266207
-        },
-        {
-            "ticker": "PEP",
-            "price": 136.63999938964844,
-            "change_pct": 1.2523175099103057,
-            "rsi": 43.37311563019289,
-            "macd": -1.799618140164739,
-            "volatility": 1.999375499436317,
-            "pred_return": 0.8347555266649734
-        },
-        {
-            "ticker": "TSLA",
-            "price": 313.0299987792969,
-            "change_pct": -2.0832692956452514,
-            "rsi": 42.62419219803025,
-            "macd": -3.64558486345652,
-            "volatility": 3.67694133825306,
-            "pred_return": 0.7041395327185338
-        },
-        {
-            "ticker": "WMT",
-            "price": 109.47000122070312,
-            "change_pct": 0.9870845754266666,
-            "rsi": 46.44459428863624,
-            "macd": -1.5710530024773988,
-            "volatility": 1.6666586335985574,
-            "pred_return": 0.6620886924084036
-        },
-        {
-            "ticker": "MRK",
-            "price": 131.07000732421875,
-            "change_pct": 0.4521854812991499,
-            "rsi": 58.20842015072931,
-            "macd": 1.8775240848086696,
-            "volatility": 2.1204219658425267,
-            "pred_return": 0.5785852310546786
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 46.228500549310574,
+            "macd": -1.1618297510875664,
+            "volatility": 2.2919731325306985,
+            "pred_return": 2.2350919018580244
         },
         {
             "ticker": "MSFT",
-            "price": 381.70001220703125,
-            "change_pct": 0.03145490827332065,
-            "rsi": 51.886158231185036,
-            "macd": -0.9777144096935899,
-            "volatility": 2.3762159960206812,
-            "pred_return": 0.5360551536883175
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 56.28404484111384,
+            "macd": -1.511340898923379,
+            "volatility": 2.364438156270496,
+            "pred_return": 1.101160423818846
+        },
+        {
+            "ticker": "MRK",
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 58.47096992554448,
+            "macd": 1.7829363727486225,
+            "volatility": 2.11685885553658,
+            "pred_return": 0.7019812917418929
         },
         {
             "ticker": "AMZN",
-            "price": 232.11000061035156,
-            "change_pct": -0.6633583101364859,
-            "rsi": 51.32365303113972,
-            "macd": 0.5921148147105839,
-            "volatility": 2.1346826269811072,
-            "pred_return": 0.522880422746194
-        },
-        {
-            "ticker": "HD",
-            "price": 332.9800109863281,
-            "change_pct": 2.5468940743679225,
-            "rsi": 51.07442403963789,
-            "macd": 3.9803552742343413,
-            "volatility": 2.093388923093245,
-            "pred_return": 0.5052054231650129
-        },
-        {
-            "ticker": "CVX",
-            "price": 194.7899932861328,
-            "change_pct": 0.19030712924190674,
-            "rsi": 63.85428757959831,
-            "macd": 0.6446412357211102,
-            "volatility": 1.6859957853476104,
-            "pred_return": 0.4931939811266381
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 54.19093701276805,
+            "macd": 0.5689084492264556,
+            "volatility": 2.1196095239717936,
+            "pred_return": 0.6932862009029632
         },
         {
             "ticker": "NVDA",
-            "price": 206.83999633789062,
-            "change_pct": -0.9197155678610791,
-            "rsi": 48.22224430542101,
-            "macd": 0.14715299908326074,
-            "volatility": 2.4116602171066672,
-            "pred_return": 0.4420787897423731
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 52.14515404666333,
+            "macd": 0.3757995825124283,
+            "volatility": 2.41894311396753,
+            "pred_return": 0.573767489380248
         },
         {
-            "ticker": "AAPL",
-            "price": 333.0199890136719,
-            "change_pct": 3.5316748188238156,
-            "rsi": 71.65827439149123,
-            "macd": 8.822128012631651,
-            "volatility": 2.2595275094539513,
-            "pred_return": 0.4338368299223311
+            "ticker": "PEP",
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 47.074974226292895,
+            "macd": -1.7711139911867804,
+            "volatility": 1.974644221769075,
+            "pred_return": 0.4789925921362775
         },
         {
-            "ticker": "COST",
-            "price": 935.030029296875,
-            "change_pct": 0.9686231736528272,
-            "rsi": 47.23334533094167,
-            "macd": -12.244870043576043,
-            "volatility": 1.6345971592503818,
-            "pred_return": 0.39806804166885246
+            "ticker": "HD",
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 58.48237490415619,
+            "macd": 4.587427748052335,
+            "volatility": 2.0498382000332334,
+            "pred_return": 0.4133457584565075
+        },
+        {
+            "ticker": "WMT",
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 48.13290744544981,
+            "macd": -1.7337776914242653,
+            "volatility": 1.6671455084747384,
+            "pred_return": 0.40830902702035266
+        },
+        {
+            "ticker": "TSLA",
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 45.988600710906844,
+            "macd": -2.375333986404712,
+            "volatility": 3.650159172182113,
+            "pred_return": 0.34833922279838964
         },
         {
             "ticker": "JNJ",
-            "price": 263.3999938964844,
-            "change_pct": 1.5929359578114255,
-            "rsi": 54.502248907379695,
-            "macd": 4.445505112326458,
-            "volatility": 2.03694816620298,
-            "pred_return": 0.3946490250308468
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 51.67955592518449,
+            "macd": 4.83931605593412,
+            "volatility": 2.0306989336611867,
+            "pred_return": 0.3333738188190107
+        },
+        {
+            "ticker": "AAPL",
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 71.44149613947846,
+            "macd": 7.879707415204109,
+            "volatility": 2.2592247174229865,
+            "pred_return": 0.2907468836024437
+        },
+        {
+            "ticker": "CVX",
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 59.63761452557905,
+            "macd": -0.12789288887981343,
+            "volatility": 1.6408200659579244,
+            "pred_return": 0.28479603233652934
         },
         {
             "ticker": "BAC",
-            "price": 62.04999923706055,
-            "change_pct": 1.2565281871771417,
-            "rsi": 70.31747094490912,
-            "macd": 1.699513256823174,
-            "volatility": 1.2847139241165435,
-            "pred_return": 0.2478982937180808
-        },
-        {
-            "ticker": "PG",
-            "price": 147.41000366210938,
-            "change_pct": 0.2993824846919013,
-            "rsi": 53.1623301717711,
-            "macd": 0.5290339793001522,
-            "volatility": 1.6225834073187968,
-            "pred_return": 0.2471892934889996
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 72.22031409379191,
+            "macd": 1.6985588127785434,
+            "volatility": 1.3068103401825104,
+            "pred_return": 0.260647703958397
         },
         {
             "ticker": "KO",
-            "price": 82.25,
-            "change_pct": 1.3305431260535405,
-            "rsi": 48.57683466465896,
-            "macd": 0.8137210656649216,
-            "volatility": 1.7098832135244042,
-            "pred_return": 0.205555439688976
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 61.08915743750844,
+            "macd": 1.011617983759976,
+            "volatility": 1.4556238987879662,
+            "pred_return": 0.2553240536896542
+        },
+        {
+            "ticker": "PG",
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 56.224238144408204,
+            "macd": 0.4593513956476727,
+            "volatility": 1.6358250096031268,
+            "pred_return": 0.23513637156173817
         },
         {
             "ticker": "V",
-            "price": 355.739990234375,
-            "change_pct": 1.1774698688829188,
-            "rsi": 62.32426214077673,
-            "macd": 8.351206767979875,
-            "volatility": 1.505313015682636,
-            "pred_return": 0.14692589154558386
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 69.68092678062047,
+            "macd": 8.465640552816865,
+            "volatility": 1.514892614294665,
+            "pred_return": 0.1414631079445343
+        },
+        {
+            "ticker": "COST",
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 48.69575498122231,
+            "macd": -13.717767421260874,
+            "volatility": 1.64606286974847,
+            "pred_return": 0.13335431944446938
         },
         {
             "ticker": "JPM",
-            "price": 353.2099914550781,
-            "change_pct": 0.9459838857765135,
-            "rsi": 60.931199834667545,
-            "macd": 7.020164058538569,
-            "volatility": 1.395342801172745,
-            "pred_return": 0.13239898825628782
-        },
-        {
-            "ticker": "META",
-            "price": 595.1900024414062,
-            "change_pct": -1.8000286394970089,
-            "rsi": 56.82198685719708,
-            "macd": 19.34863098474682,
-            "volatility": 3.5703866669207343,
-            "pred_return": 0.10146779770982836
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 63.37744150782752,
+            "macd": 7.2442848234941835,
+            "volatility": 1.5772474935607466,
+            "pred_return": 0.12979928337442023
         },
         {
             "ticker": "MA",
-            "price": 539.6599731445312,
-            "change_pct": 1.7669568548218662,
-            "rsi": 64.11591984475749,
-            "macd": 12.637089769715544,
-            "volatility": 1.5968017473115566,
-            "pred_return": -0.11761808763276367
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 69.81522144062286,
+            "macd": 12.398965371545955,
+            "volatility": 1.5828201249629466,
+            "pred_return": -0.21943559958854889
+        },
+        {
+            "ticker": "META",
+            "price": NaN,
+            "change_pct": NaN,
+            "rsi": 61.85250897473399,
+            "macd": 19.991163045799908,
+            "volatility": 3.496497133920537,
+            "pred_return": -0.36413221364094567
         }
     ],
     "performance": {
@@ -227,9 +227,9 @@
         ],
         "spy_equity": [
             100.0,
-            100.10160123647911
+            NaN
         ],
         "bot_return_pct": 0.8042199999999999,
-        "spy_return_pct": 0.10160123647911234
+        "spy_return_pct": NaN
     }
 }
