@@ -270,7 +270,7 @@ def format_ticker_for_alpaca(ticker):
     # Les actions standards n'ont pas besoin de formatage particulier
     return ticker
 
-def execute_live_orders(top_picks_details):
+def execute_live_orders(top_picks_details, trade_today=True):
     if client is None:
         print("API Alpaca non configuree. Mode Simulation uniquement.")
         return
@@ -296,46 +296,54 @@ def execute_live_orders(top_picks_details):
     alpaca_buy_signals = [format_ticker_for_alpaca(t) for t in buy_signals]
     
     print(f"Positions actuellement detenues : {holdings_before}")
-    print(f"Nouveaux Signaux d'Achat generes par l'IA : {buy_signals}")
-    
-    # 2. Vendre ce qui n'a plus de signal
-    for symbol in current_holdings.keys():
-        if symbol not in alpaca_buy_signals:
-            print(f"Vente de {symbol} (Sorti du Top-3)")
+    if trade_today:
+        print(f"Nouveaux Signaux d'Achat generes par l'IA : {buy_signals}")
+    else:
+        print(f"Signaux d'Achat (Information uniquement) : {buy_signals}")
+        
+    if not trade_today:
+        print("--- REBALANCEMENT SUSPENDU ---")
+        print("La derniere session n'etait pas un Lundi. Mise a jour du Dashboard uniquement.")
+    else:
+        # 2. Vendre ce qui n'a plus de signal
+        for symbol in current_holdings.keys():
+            if symbol not in alpaca_buy_signals:
+                print(f"Vente de {symbol} (Sorti du Top-3)")
             try:
                 client.close_position(symbol)
             except Exception as e:
                 print(f"Erreur a la revente de {symbol} : {e}")
             
     # 3. Acheter les nouveaux signaux
-    if len(alpaca_buy_signals) > 0:
-        new_assets = [s for s in alpaca_buy_signals if s not in current_holdings]
-        
-        if len(new_assets) > 0:
-            # On utilise le account reactualise
-            account_fresh = client.get_account()
-            buying_power = float(account_fresh.buying_power)
-            budget_per_asset = (buying_power * 0.95) / len(new_assets)
-            budget_per_asset = round(budget_per_asset, 2)
-            print(f"Budget alloue par NOUVEL actif : {budget_per_asset} $")
+    if trade_today:
+        if len(alpaca_buy_signals) > 0:
+            new_assets = [s for s in alpaca_buy_signals if s not in current_holdings]
             
-            for symbol in new_assets:
-                print(f"Achat de {symbol}")
-                try:
-                    req = MarketOrderRequest(
-                        symbol=symbol,
-                        notional=budget_per_asset,
-                        side=OrderSide.BUY,
-                        time_in_force=TimeInForce.DAY
-                    )
-                    client.submit_order(req)
-                    print(f" -> Ordre execute : {budget_per_asset:.2f} $ de {symbol}")
-                except Exception as e:
-                    print(f"Erreur lors de l'achat de {symbol} : {e}")
+            if len(new_assets) > 0:
+                # On utilise le account reactualise
+                account_fresh = client.get_account()
+                buying_power = float(account_fresh.buying_power)
+                budget_per_asset = (buying_power * 0.95) / len(new_assets)
+                budget_per_asset = round(budget_per_asset, 2)
+                print(f"Budget alloue par NOUVEL actif : {budget_per_asset} $")
+                
+                for symbol in new_assets:
+                    print(f"Achat de {symbol}")
+                    try:
+                        req = MarketOrderRequest(
+                            symbol=symbol,
+                            notional=budget_per_asset,
+                            side=OrderSide.BUY,
+                            time_in_force=TimeInForce.DAY
+                        )
+                        client.submit_order(req)
+                        print(f" -> Ordre execute : {budget_per_asset:.2f} $ de {symbol}")
+                    except Exception as e:
+                        print(f"Erreur lors de l'achat de {symbol} : {e}")
+            else:
+                print("Tous les actifs du Top-3 sont deja en portefeuille. Aucun nouvel achat necessaire.")
         else:
-            print("Tous les actifs du Top-3 sont deja en portefeuille. Aucun nouvel achat necessaire.")
-    else:
-        print("Aucun signal d'achat aujourd'hui. L'IA reste en securite (Cash).")
+            print("Aucun signal d'achat aujourd'hui. L'IA reste en securite (Cash).")
 
     # 4. Bilan Post-Execution pour Telegram
     print("\n--- PREPARATION DU MESSAGE TELEGRAM ---")
@@ -411,8 +419,21 @@ def execute_live_orders(top_picks_details):
     return {'balance': initial_balance, 'buying_power': float(account.buying_power), 'history': order_history}
 
 if __name__ == '__main__':
+    # Determine if last trading session was a Monday
+    try:
+        import yfinance as yf
+        spy = yf.download('SPY', period='5d', progress=False)
+        if not spy.empty:
+            last_trading_day = spy.index[-1].weekday()
+        else:
+            last_trading_day = -1
+    except Exception:
+        last_trading_day = -1
+        
+    is_monday = (last_trading_day == 0)
+    
     top_picks_details, full_universe_analysis = generate_todays_signals()
-    account_info = execute_live_orders(top_picks_details)
+    account_info = execute_live_orders(top_picks_details, trade_today=is_monday)
     
     if account_info and client:
         perf_data = get_performance_comparison(client)
