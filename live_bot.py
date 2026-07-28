@@ -30,6 +30,12 @@ UNIVERSE = [
 TOP_N = 3 # On garde le Top 3 qui est le plus performant
 HORIZON_DAYS = 5
 
+FEATURES_LIST = [
+    'Ret_1d', 'Ret_5d', 'Ret_21d', 'Ret_42d', 'Ret_63d', 'Ret_126d', 'Ret_252d',
+    'Vol_21d', 'RSI_14', 'MACD', 'Dist_BB_Upper', 'Dist_BB_Lower', 'DayOfWeek', 'Month',
+    'Volume_Ratio', 'ATR_14', 'OBV', 'SMA200_dist', 'VIX', 'Sector_RS'
+]
+
 def send_telegram_message(message):
     token = os.getenv('TELEGRAM_BOT_TOKEN')
     chat_id = os.getenv('TELEGRAM_CHAT_ID')
@@ -43,7 +49,7 @@ def send_telegram_message(message):
     except Exception as e:
         print(f"Erreur d'envoi Telegram : {e}")
 
-def prepare_features(df_raw):
+def prepare_features(df_raw, vix_data=None, spy_data=None, for_prediction=False):
     df = df_raw.copy()
     
     # Lags (Momentum)
@@ -76,10 +82,41 @@ def prepare_features(df_raw):
     df['DayOfWeek'] = df.index.dayofweek
     df['Month'] = df.index.month
     
-    # Target
-    df['Target_5d'] = df['Close'].shift(-5) / df['Close'] - 1
+    # Nouveaux indicateurs
+    df['Volume_Ratio'] = df['Volume'] / df['Volume'].rolling(20).mean()
     
-    df.dropna(inplace=True)
+    high_low = df['High'] - df['Low']
+    high_close = (df['High'] - df['Close'].shift()).abs()
+    low_close = (df['Low'] - df['Close'].shift()).abs()
+    tr = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
+    atr = tr.rolling(14).mean()
+    df['ATR_14'] = atr / df['Close']
+    
+    obv = (np.sign(df['Close'].diff()) * df['Volume']).fillna(0).cumsum()
+    df['OBV'] = (obv - obv.rolling(50).mean()) / obv.rolling(50).std()
+    
+    sma200 = df['Close'].rolling(200).mean()
+    df['SMA200_dist'] = (df['Close'] / sma200) - 1
+    
+    if vix_data is not None:
+        df['VIX'] = vix_data['Close'].reindex(df.index).ffill()
+    else:
+        df['VIX'] = 20.0
+        
+    if spy_data is not None:
+        spy_ret21 = spy_data['Close'].pct_change(21)
+        spy_ret21_aligned = spy_ret21.reindex(df.index).ffill()
+        df['Sector_RS'] = df['Ret_21d'] - spy_ret21_aligned
+    else:
+        df['Sector_RS'] = 0.0
+    
+    if not for_prediction:
+        # Target
+        df['Target_5d'] = df['Close'].shift(-5) / df['Close'] - 1
+        df.dropna(inplace=True)
+    else:
+        df.dropna(subset=FEATURES_LIST, inplace=True)
+        
     return df
 
 def generate_todays_signals():
@@ -92,24 +129,30 @@ def generate_todays_signals():
         if not df.empty:
             data_dict[ticker] = df
 
+    # Telechargement VIX et SPY
+    vix_df = yf.download('^VIX', period='5y', progress=False)
+    if isinstance(vix_df.columns, pd.MultiIndex):
+        vix_df.columns = vix_df.columns.droplevel(1)
+    
+    spy_df = yf.download('SPY', period='5y', progress=False)
+    if isinstance(spy_df.columns, pd.MultiIndex):
+        spy_df.columns = spy_df.columns.droplevel(1)
+
     print("PREPARATION DES FEATURES...")
-    all_features = {}
-    features_list = [
-        'Ret_1d', 'Ret_5d', 'Ret_21d', 'Ret_42d', 'Ret_63d', 'Ret_126d', 'Ret_252d',
-        'Vol_21d', 'RSI_14', 'MACD', 'Dist_BB_Upper', 'Dist_BB_Lower', 'DayOfWeek', 'Month'
-    ]
+    all_features_train = {}
+    all_features_predict = {}
     
     for ticker, df in data_dict.items():
-        all_features[ticker] = prepare_features(df)
+        all_features_train[ticker] = prepare_features(df, vix_df, spy_df, for_prediction=False)
+        all_features_predict[ticker] = prepare_features(df, vix_df, spy_df, for_prediction=True)
 
     print("ENTRAINEMENT DU MODELE LIGHTGBM (sans look-ahead bias)...")
     X_train_list, y_train_list = [], []
-    current_date = list(all_features.values())[0].index[-1]
     
-    for ticker, df in all_features.items():
+    for ticker, df in all_features_train.items():
         # Retrait des 5 derniers jours pour eviter la triche sur le Target_5d
         df_hist = df.iloc[:-5] 
-        X_train_list.append(df_hist[features_list])
+        X_train_list.append(df_hist[FEATURES_LIST])
         y_train_list.append(df_hist['Target_5d'])
         
     X_train = pd.concat(X_train_list)
@@ -125,8 +168,8 @@ def generate_todays_signals():
     predictions = []
     full_universe_analysis = []
     
-    for ticker, df in all_features.items():
-        row = df.iloc[-1]
+    for ticker, df_predict in all_features_predict.items():
+        row = df_predict.iloc[-1]
         
         df_raw = data_dict[ticker]
         last_close = df_raw['Close'].iloc[-1]
@@ -134,8 +177,8 @@ def generate_todays_signals():
         change_pct = ((last_close / prev_close) - 1) * 100
         
         pred_return = 0
-        if not row[features_list].isnull().any():
-            X_today = pd.DataFrame([row[features_list]])
+        if not row[FEATURES_LIST].isnull().any():
+            X_today = pd.DataFrame([row[FEATURES_LIST]])
             pred_return = model.predict(X_today)[0]
             
             if pred_return > 0: # On ne s'interesse qu'aux actions prevues a la hausse pour le Top 3
@@ -309,10 +352,10 @@ def execute_live_orders(top_picks_details, trade_today=True):
         for symbol in current_holdings.keys():
             if symbol not in alpaca_buy_signals:
                 print(f"Vente de {symbol} (Sorti du Top-3)")
-            try:
-                client.close_position(symbol)
-            except Exception as e:
-                print(f"Erreur a la revente de {symbol} : {e}")
+                try:
+                    client.close_position(symbol)
+                except Exception as e:
+                    print(f"Erreur a la revente de {symbol} : {e}")
             
     # 3. Acheter les nouveaux signaux
     if trade_today:

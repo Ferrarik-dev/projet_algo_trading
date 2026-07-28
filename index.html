@@ -18,11 +18,15 @@
         </div>
     </header>
 
+    <div id="error-banner" class="error-banner" style="display:none;">
+        <span>⚠️ Erreur de chargement des données. Vérifiez votre connexion.</span>
+    </div>
+
     <!-- TAB 1 : ACCUEIL -->
     <main id="tab-home" class="tab-content active">
         <div class="balance-card">
             <h2 class="balance-title">Solde Total</h2>
-            <div class="balance-amount" id="total-balance">$0.00</div>
+            <div class="balance-amount" id="total-balance"><span class="skeleton">Chargement...</span></div>
             <div class="balance-subtitle">Pouvoir d'achat : <span id="buying-power">$0.00</span></div>
             <div class="update-time" id="last-update">--</div>
         </div>
@@ -51,6 +55,7 @@
                         <th class="right">Prédiction</th>
                         <th class="right">RSI</th>
                         <th class="right">MACD</th>
+                        <th class="right">Sentiment</th>
                     </tr>
                 </thead>
                 <tbody id="universe-table-body">

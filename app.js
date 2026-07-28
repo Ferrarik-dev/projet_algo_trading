@@ -45,6 +45,11 @@ async function loadData() {
         renderCharts('1M'); // Default
     } catch (e) {
         console.error("Erreur de chargement", e);
+        const errorBanner = document.getElementById('error-banner');
+        if (errorBanner) {
+            errorBanner.style.display = 'block';
+            errorBanner.innerHTML = '<span>⚠️ Erreur de chargement des données. Vérifiez votre connexion.</span>';
+        }
     }
 }
 
@@ -61,13 +66,17 @@ function renderHome() {
     data.top_picks.forEach(pick => {
         const portfolioPct = pick.portfolio_pct || 0;
         const titleLine = `<span class="item-title">${pick.ticker} <span style="font-size:0.75rem; font-weight:normal; color:#6B6C72">(${portfolioPct.toFixed(1)}% du port.)</span></span>`;
-        const nlpStr = pick.nlp_alert.split(':')[0];
+        const nlpAlertRaw = pick.nlp_alert || 'NEUTRE';
+        const nlpStr = nlpAlertRaw.split(':')[0];
+        let nlpBadgeClass = 'nlp-badge-neutral';
+        if (nlpStr.includes('FEU VERT')) nlpBadgeClass = 'nlp-badge-positive';
+        else if (nlpStr.includes('ATTENTION')) nlpBadgeClass = 'nlp-badge-negative';
         
         picksContainer.innerHTML += `
             <div class="list-item">
                 <div class="item-left" style="flex:1">
                     ${titleLine}
-                    <span class="item-subtitle">Avis IA: ${nlpStr}</span>
+                    <span class="item-subtitle">Avis IA: <span class="${nlpBadgeClass}">${nlpStr}</span></span>
                     <div class="item-row" style="margin-top:12px;">
                         <span>P&L Latent: ${getBadgeHTML(pick.unrealized_pl, true)}</span>
                     </div>
@@ -83,22 +92,26 @@ function renderHome() {
     // History
     const historyContainer = document.getElementById('history-list');
     historyContainer.innerHTML = '';
-    data.account.history.forEach(order => {
-        const sideTxt = order.side.toUpperCase() === 'BUY' ? 'Achat' : 'Vente';
-        const color = order.side.toUpperCase() === 'BUY' ? 'text-green' : 'text-red';
-        historyContainer.innerHTML += `
-            <div class="list-item">
-                <div class="item-left">
-                    <span class="item-title">${order.symbol}</span>
-                    <span class="item-subtitle">${order.date}</span>
+    if (data.account.history.length === 0) {
+        historyContainer.innerHTML = '<div class="empty-state">Aucun ordre récent</div>';
+    } else {
+        data.account.history.forEach(order => {
+            const sideTxt = order.side.toUpperCase() === 'BUY' ? 'Achat' : 'Vente';
+            const color = order.side.toUpperCase() === 'BUY' ? 'text-green' : 'text-red';
+            historyContainer.innerHTML += `
+                <div class="list-item">
+                    <div class="item-left">
+                        <span class="item-title">${order.symbol}</span>
+                        <span class="item-subtitle">${order.date}</span>
+                    </div>
+                    <div class="item-right">
+                        <span class="item-value ${color}">${sideTxt}</span>
+                        <span class="item-subvalue">${order.qty} part(s) @ ${formatCurrency(order.price)}</span>
+                    </div>
                 </div>
-                <div class="item-right">
-                    <span class="item-value ${color}">${sideTxt}</span>
-                    <span class="item-subvalue">${order.qty} part(s) @ ${formatCurrency(order.price)}</span>
-                </div>
-            </div>
-        `;
-    });
+            `;
+        });
+    }
 }
 
 // Render Assets (Table)
@@ -109,6 +122,12 @@ function renderAssets() {
     if(!globalData.full_analysis) return;
     
     globalData.full_analysis.forEach(asset => {
+        const nlpAlertRaw = asset.nlp_alert || 'NEUTRE';
+        const nlpStr = nlpAlertRaw.split(':')[0];
+        let nlpBadgeClass = 'nlp-badge-neutral';
+        if (nlpStr.includes('FEU VERT')) nlpBadgeClass = 'nlp-badge-positive';
+        else if (nlpStr.includes('ATTENTION')) nlpBadgeClass = 'nlp-badge-negative';
+
         tableBody.innerHTML += `
             <tr>
                 <td><strong>${asset.ticker}</strong></td>
@@ -117,6 +136,7 @@ function renderAssets() {
                 <td class="right ${getColorClass(asset.pred_return)}"><strong>${formatPercent(asset.pred_return)}</strong></td>
                 <td class="right">${asset.rsi.toFixed(1)}</td>
                 <td class="right">${asset.macd.toFixed(2)}</td>
+                <td class="right"><span class="${nlpBadgeClass}">${nlpStr}</span></td>
             </tr>
         `;
     });
@@ -162,6 +182,22 @@ function renderCharts(range) {
     const botProfit = botEnd - SIMULATED_START_CAPITAL;
     const spyProfit = spyEnd - SIMULATED_START_CAPITAL;
     
+    let extraMetrics = '';
+    if (rawData.sharpe_ratio !== undefined) {
+        extraMetrics += `
+        <div class="perf-metric">
+            <div class="perf-metric-title">Sharpe</div>
+            <div class="perf-metric-val">${rawData.sharpe_ratio}</div>
+        </div>`;
+    }
+    if (rawData.cagr !== undefined) {
+        extraMetrics += `
+        <div class="perf-metric">
+            <div class="perf-metric-title">CAGR</div>
+            <div class="perf-metric-val">${rawData.cagr}</div>
+        </div>`;
+    }
+    
     document.getElementById('perf-metrics-div').innerHTML = `
         <div class="perf-metric">
             <div class="perf-metric-title">Gains IA ($10k)</div>
@@ -171,6 +207,7 @@ function renderCharts(range) {
             <div class="perf-metric-title">Gains SPY ($10k)</div>
             <div class="perf-metric-val ${getColorClass(spyProfit)}">${getBadgeHTML(spyProfit, true)}</div>
         </div>
+        ${extraMetrics}
     `;
 
     // Chart 1: Comparison

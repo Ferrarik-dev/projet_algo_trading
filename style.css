@@ -348,3 +348,63 @@ body {
 .nav-item:active {
     transform: scale(0.95);
 }
+
+/* NLP Badges */
+.nlp-badge-positive {
+    background-color: var(--qb-green-bg);
+    color: var(--qb-green);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.nlp-badge-negative {
+    background-color: var(--qb-red-bg);
+    color: var(--qb-red);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.nlp-badge-neutral {
+    background-color: #F0F0F0;
+    color: #888;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Error Banner */
+.error-banner {
+    background-color: var(--qb-red-bg);
+    color: var(--qb-red);
+    padding: 12px 20px;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Skeleton Loader */
+.skeleton {
+    color: transparent;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+    display: inline-block;
+    min-width: 120px;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 24px;
+    color: var(--qb-text-light);
+    font-size: 0.9rem;
+}

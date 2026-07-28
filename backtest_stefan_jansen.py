@@ -16,6 +16,12 @@ UNIVERSE = [
     'JNJ', 'PG', 'MA', 'HD', 'CVX', 'MRK', 'KO', 'PEP', 'BAC', 'COST'
 ]
 
+FEATURES_LIST = [
+    'Ret_1d', 'Ret_5d', 'Ret_21d', 'Ret_42d', 'Ret_63d', 'Ret_126d', 'Ret_252d',
+    'Vol_21d', 'RSI_14', 'MACD', 'Dist_BB_Upper', 'Dist_BB_Lower', 'DayOfWeek', 'Month',
+    'Volume_Ratio', 'ATR_14', 'OBV', 'SMA200_dist', 'VIX', 'Sector_RS'
+]
+
 def download_data():
     print("Telechargement des donnees (2016-2024) pour l'univers S&P 500...")
     data = {}
@@ -25,9 +31,19 @@ def download_data():
             df.columns = df.columns.droplevel(1)
         if not df.empty:
             data[ticker] = df
-    return data
+            
+    print("Téléchargement du VIX et du SPY...")
+    vix_data = yf.download('^VIX', start=START_DATE, end=END_DATE, progress=False)
+    if isinstance(vix_data.columns, pd.MultiIndex):
+        vix_data.columns = vix_data.columns.droplevel(1)
+        
+    spy_data = yf.download('SPY', start=START_DATE, end=END_DATE, progress=False)
+    if isinstance(spy_data.columns, pd.MultiIndex):
+        spy_data.columns = spy_data.columns.droplevel(1)
+        
+    return data, vix_data, spy_data
 
-def prepare_features(df_raw):
+def prepare_features(df_raw, vix_data=None, spy_data=None):
     df = df_raw.copy()
     
     # Rendements passes (Momentum)
@@ -60,6 +76,37 @@ def prepare_features(df_raw):
     # Time Dummies
     df['DayOfWeek'] = df.index.dayofweek
     df['Month'] = df.index.month
+
+    # Volume_Ratio
+    df['Volume_Ratio'] = df['Volume'] / df['Volume'].rolling(21).mean()
+
+    # ATR_14
+    high_low = df['High'] - df['Low']
+    high_close = (df['High'] - df['Close'].shift()).abs()
+    low_close = (df['Low'] - df['Close'].shift()).abs()
+    tr = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
+    df['ATR_14'] = tr.rolling(14).mean() / df['Close']
+
+    # OBV (Z-score 50j)
+    obv = (np.sign(df['Close'].diff()) * df['Volume']).fillna(0).cumsum()
+    df['OBV'] = (obv - obv.rolling(50).mean()) / obv.rolling(50).std()
+
+    # SMA200_dist
+    df['SMA200_dist'] = df['Close'] / df['Close'].rolling(200).mean() - 1
+
+    # VIX
+    if vix_data is not None and not vix_data.empty:
+        df['VIX'] = vix_data['Close'].reindex(df.index, method='ffill')
+    else:
+        df['VIX'] = 20.0
+
+    # Sector_RS (vs SPY)
+    if spy_data is not None and not spy_data.empty:
+        spy_ret_21d = spy_data['Close'].pct_change(21)
+        spy_ret_aligned = spy_ret_21d.reindex(df.index, method='ffill')
+        df['Sector_RS'] = df['Ret_21d'] - spy_ret_aligned
+    else:
+        df['Sector_RS'] = 0.0
     
     # Target : Rendement a 5 jours
     df['Target_5d'] = df['Close'].shift(-5) / df['Close'] - 1
@@ -118,16 +165,11 @@ class StefanJansenRankingStrategy(bt.Strategy):
 
 def run_simulation(top_n=5):
     print(f"\n--- PREPARATION DES DONNEES (TOP {top_n}) ---")
-    data_dict = download_data()
-    
-    features_list = [
-        'Ret_1d', 'Ret_5d', 'Ret_21d', 'Ret_42d', 'Ret_63d', 'Ret_126d', 'Ret_252d',
-        'Vol_21d', 'RSI_14', 'MACD', 'Dist_BB_Upper', 'Dist_BB_Lower', 'DayOfWeek', 'Month'
-    ]
+    data_dict, vix_data, spy_data = download_data()
     
     all_features = {}
     for ticker, df in data_dict.items():
-        all_features[ticker] = prepare_features(df)
+        all_features[ticker] = prepare_features(df, vix_data=vix_data, spy_data=spy_data)
         
     print("Génération des prédictions ML (Walk-Forward avec LightGBM)...")
     trading_days = pd.date_range(start=START_TRADING_DATE, end=END_DATE, freq='B')
@@ -146,7 +188,7 @@ def run_simulation(top_n=5):
                 if len(df_hist) > 252 + 5: # Au moins 1 an de donnees + horizon
                     # Retirer les 5 derniers jours pour eviter le Look-Ahead Bias
                     df_hist = df_hist.iloc[:-5]
-                    X_train_list.append(df_hist[features_list])
+                    X_train_list.append(df_hist[FEATURES_LIST])
                     y_train_list.append(df_hist['Target_5d'])
                     
             if X_train_list:
@@ -172,8 +214,8 @@ def run_simulation(top_n=5):
             if ticker not in predictions_log: predictions_log[ticker] = {}
             if current_date in df.index:
                 row = df.loc[current_date]
-                if not row[features_list].isnull().any():
-                    X_today = pd.DataFrame([row[features_list]])
+                if not row[FEATURES_LIST].isnull().any():
+                    X_today = pd.DataFrame([row[FEATURES_LIST]])
                     pred = trained_model.predict(X_today)[0]
                     predictions_log[ticker][current_date] = pred
 
@@ -181,6 +223,7 @@ def run_simulation(top_n=5):
     cerebro = bt.Cerebro()
     cerebro.broker.setcash(INITIAL_CAPITAL)
     cerebro.broker.setcommission(commission=0.001) # 0.1% frais par trade
+    cerebro.broker.set_slippage_perc(perc=0.001)  # 0.1% slippage réaliste
     
     # Ajouter les Data Feeds
     for ticker, df in all_features.items():
@@ -199,6 +242,8 @@ def run_simulation(top_n=5):
     cerebro.addstrategy(StefanJansenRankingStrategy, top_n=top_n)
     cerebro.addanalyzer(bt.analyzers.DrawDown, _name='drawdown')
     cerebro.addanalyzer(bt.analyzers.Returns, _name='returns')
+    cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='sharpe', riskfreerate=0.04)
+    cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name='trades')
     
     results = cerebro.run()
     final_value = cerebro.broker.getvalue()
@@ -207,10 +252,28 @@ def run_simulation(top_n=5):
     rendement = strat.analyzers.returns.get_analysis()['rtot'] * 100
     max_dd = strat.analyzers.drawdown.get_analysis()['max']['drawdown']
     
+    sharpe_ratio = strat.analyzers.sharpe.get_analysis().get('sharperatio', 0.0)
+    cagr = strat.analyzers.returns.get_analysis()['rnorm100']
+    
+    trades = strat.analyzers.trades.get_analysis()
+    total_trades = trades.total.closed if 'total' in trades and 'closed' in trades.total else 0
+    won_trades = trades.won.total if 'won' in trades and 'total' in trades.won else 0
+    win_rate = (won_trades / total_trades * 100) if total_trades > 0 else 0.0
+    
+    # Stockage des métriques pour le graphique
+    strat.metrics = {
+        'sharpe': sharpe_ratio if sharpe_ratio is not None else 0.0,
+        'cagr': cagr if cagr is not None else 0.0,
+        'win_rate': win_rate
+    }
+    
     print(f"Resultats Top {top_n} :")
     print(f"Capital final   : ${final_value:,.2f}")
     print(f"Rendement total : {rendement:+.2f}%")
-    print(f"Max Drawdown    : -{max_dd:.2f}%\n")
+    print(f"CAGR            : {strat.metrics['cagr']:.2f}%")
+    print(f"Max Drawdown    : -{max_dd:.2f}%")
+    print(f"Sharpe Ratio    : {strat.metrics['sharpe']:.2f}")
+    print(f"Win Rate        : {win_rate:.1f}% ({won_trades}/{total_trades} trades)\n")
     
     return strat
 
@@ -224,7 +287,9 @@ if __name__ == '__main__':
     # Creation du graphique
     plt.figure(figsize=(12, 6))
     plt.plot(strat_3.dates, strat_3.portfolio_values, color='royalblue', linewidth=2)
-    plt.title('Performance du Bot : Stratégie "Stefan Jansen" (Top 3 S&P 500)', fontsize=14)
+    title = 'Performance du Bot : Stratégie "Stefan Jansen" (Top 3 S&P 500)\n'
+    title += f"Sharpe: {strat_3.metrics.get('sharpe', 0.0):.2f} | CAGR: {strat_3.metrics.get('cagr', 0.0):.2f}% | Win Rate: {strat_3.metrics.get('win_rate', 0.0):.1f}%"
+    plt.title(title, fontsize=14)
     plt.xlabel('Date', fontsize=12)
     plt.ylabel('Valeur du Portefeuille ($)', fontsize=12)
     plt.grid(True, linestyle='--', alpha=0.7)
