@@ -8,7 +8,7 @@ import os
 from dotenv import load_dotenv
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import MarketOrderRequest, GetOrdersRequest, GetPortfolioHistoryRequest
-from alpaca.trading.enums import OrderSide, TimeInForce, OrderStatus
+from alpaca.trading.enums import OrderSide, TimeInForce, OrderStatus, QueryOrderStatus
 import warnings
 import json
 import requests
@@ -444,22 +444,70 @@ def execute_live_orders(top_picks_details, trade_today=True):
     print("Message Telegram envoye avec succes !")
     
     order_history = []
+    completed_trades = []
     try:
-        req_hist = GetOrdersRequest(status=OrderStatus.CLOSED, limit=20)
+        req_hist = GetOrdersRequest(status=QueryOrderStatus.CLOSED, limit=200)
         orders = client.get_orders(filter=req_hist)
-        for o in orders:
-            if o.filled_qty and float(o.filled_qty) > 0:
-                order_history.append({
-                    'symbol': o.symbol,
-                    'side': str(o.side).split('.')[-1],
-                    'qty': float(o.filled_qty),
-                    'price': float(o.filled_avg_price) if o.filled_avg_price else 0.0,
-                    'date': o.filled_at.strftime('%Y-%m-%d') if o.filled_at else ""
-                })
+        
+        filled_orders = [o for o in orders if o.filled_qty and float(o.filled_qty) > 0]
+        filled_orders.sort(key=lambda x: x.filled_at) # Plus ancien au plus recent
+        
+        open_positions_tracking = {}
+        
+        for o in filled_orders:
+            symbol = o.symbol
+            side = str(o.side).split('.')[-1].upper()
+            qty = float(o.filled_qty)
+            price = float(o.filled_avg_price) if o.filled_avg_price else 0.0
+            date_str = o.filled_at.strftime('%Y-%m-%d') if o.filled_at else ""
+            
+            if side == 'BUY':
+                if symbol not in open_positions_tracking:
+                    open_positions_tracking[symbol] = {'qty': 0, 'cost_basis': 0.0}
+                prev_qty = open_positions_tracking[symbol]['qty']
+                prev_cost = open_positions_tracking[symbol]['cost_basis']
+                new_qty = prev_qty + qty
+                new_cost = (prev_qty * prev_cost + qty * price) / new_qty if new_qty > 0 else price
+                open_positions_tracking[symbol] = {'qty': new_qty, 'cost_basis': new_cost}
+                
+            elif side == 'SELL':
+                if symbol in open_positions_tracking and open_positions_tracking[symbol]['qty'] > 0:
+                    buy_price = open_positions_tracking[symbol]['cost_basis']
+                    sell_qty = min(qty, open_positions_tracking[symbol]['qty'])
+                    
+                    realized_pl = (price - buy_price) * sell_qty
+                    return_pct = ((price / buy_price) - 1) * 100 if buy_price > 0 else 0.0
+                    
+                    completed_trades.append({
+                        'symbol': symbol,
+                        'sell_date': date_str,
+                        'buy_price': buy_price,
+                        'sell_price': price,
+                        'qty': sell_qty,
+                        'realized_pl': realized_pl,
+                        'return_pct': return_pct
+                    })
+                    
+                    open_positions_tracking[symbol]['qty'] -= sell_qty
+                    if open_positions_tracking[symbol]['qty'] <= 0.001:
+                        del open_positions_tracking[symbol]
+        
+        recent_orders = sorted(filled_orders, key=lambda x: x.filled_at, reverse=True)[:20]
+        for o in recent_orders:
+            order_history.append({
+                'symbol': o.symbol,
+                'side': str(o.side).split('.')[-1],
+                'qty': float(o.filled_qty),
+                'price': float(o.filled_avg_price) if o.filled_avg_price else 0.0,
+                'date': o.filled_at.strftime('%Y-%m-%d') if o.filled_at else ""
+            })
+            
     except Exception as e:
         print(f"Erreur recup historique : {e}")
         
-    return {'balance': initial_balance, 'buying_power': float(account.buying_power), 'history': order_history}
+    completed_trades.sort(key=lambda x: x['sell_date'], reverse=True)
+        
+    return {'balance': initial_balance, 'buying_power': float(account.buying_power), 'history': order_history, 'completed_trades': completed_trades}
 
 if __name__ == '__main__':
     # Determine if last trading session was a Monday

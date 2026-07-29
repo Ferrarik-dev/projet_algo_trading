@@ -43,6 +43,7 @@ async function loadData() {
         renderHome();
         renderAssets();
         renderCharts('1M'); // Default
+        if (typeof renderCompletedTrades === 'function') renderCompletedTrades();
     } catch (e) {
         console.error("Erreur de chargement", e);
         const errorBanner = document.getElementById('error-banner');
@@ -301,6 +302,44 @@ function renderCharts(range) {
             }
         }
     });
+}
+
+// Render Completed Trades
+function renderCompletedTrades() {
+    const container = document.getElementById('completed-trades-list');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    if (!globalData.account.completed_trades || globalData.account.completed_trades.length === 0) {
+        container.innerHTML = '<div class="empty-state">Aucun trade clôturé récent pour calculer le P&L.</div>';
+        const totalPlEl = document.getElementById('total-realized-pl');
+        if (totalPlEl) totalPlEl.innerHTML = getBadgeHTML(0, true);
+        return;
+    }
+    
+    let totalRealized = 0;
+    
+    globalData.account.completed_trades.forEach(trade => {
+        totalRealized += trade.realized_pl;
+        const colorClass = getColorClass(trade.realized_pl);
+        container.innerHTML += `
+            <div class="list-item">
+                <div class="item-left">
+                    <span class="item-title">${trade.symbol}</span>
+                    <span class="item-subtitle">Vendu le ${trade.sell_date}</span>
+                </div>
+                <div class="item-right">
+                    <span class="item-value ${colorClass}">${getBadgeHTML(trade.realized_pl, true)}</span>
+                    <span class="item-subvalue ${getColorClass(trade.return_pct)}">${formatPercent(trade.return_pct)}</span>
+                </div>
+            </div>
+        `;
+    });
+    
+    const totalPlEl = document.getElementById('total-realized-pl');
+    if (totalPlEl) {
+        totalPlEl.innerHTML = getBadgeHTML(totalRealized, true);
+    }
 }
 
 // Dropdown listener

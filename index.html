@@ -96,6 +96,20 @@
         </div>
     </main>
 
+    <!-- TAB 4 : HISTORIQUE ET P&L -->
+    <main id="tab-history" class="tab-content">
+        <div class="balance-card">
+            <h2 class="balance-title">Gains Réalisés Globaux</h2>
+            <div class="balance-amount" id="total-realized-pl"><span class="skeleton">Chargement...</span></div>
+            <div class="balance-subtitle">Sur les trades terminés</div>
+        </div>
+        
+        <div class="section-title">Détail des positions clôturées</div>
+        <div class="list-container" id="completed-trades-list">
+            <!-- Injecté via JS -->
+        </div>
+    </main>
+
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
         <div class="nav-item active" data-target="tab-home">
@@ -115,6 +129,12 @@
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
             </div>
             <span>Performance</span>
+        </div>
+        <div class="nav-item" data-target="tab-history">
+            <div class="nav-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            </div>
+            <span>P&L</span>
         </div>
     </nav>
 
