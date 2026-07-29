@@ -158,10 +158,22 @@ def generate_todays_signals():
         
     X_train = pd.concat(X_train_list)
     y_train = pd.concat(y_train_list)
+    meta_features = pd.concat(meta_features_list)
     
-    X_train_sorted = X_train.sort_index()
-    y_train_sorted = y_train.loc[X_train_sorted.index]
-    meta_features_sorted = pd.concat(meta_features_list).loc[X_train_sorted.index]
+    # Fusionner avec reset_index pour eviter l'explosion des index dupliques (dates communes)
+    X_train_reset = X_train.reset_index()
+    y_train_reset = y_train.reset_index(drop=True)
+    meta_features_reset = meta_features.reset_index(drop=True)
+    
+    X_train_reset['TARGET_Y'] = y_train_reset
+    for col in meta_features.columns:
+        X_train_reset[col] = meta_features_reset[col]
+        
+    X_train_sorted_full = X_train_reset.sort_values(by='Date').set_index('Date')
+    
+    X_train_sorted = X_train_sorted_full[FEATURES_LIST]
+    y_train_sorted = X_train_sorted_full['TARGET_Y']
+    meta_features_sorted = X_train_sorted_full[['Vol_21d', 'VIX', 'Sector_RS']]
     
     model = lgb.LGBMRegressor(
         n_estimators=100, learning_rate=0.05, max_depth=5,
