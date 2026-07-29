@@ -1,6 +1,0 @@
-DEMARRAGE DU SETUP STEFAN JANSEN + DONNEES FONDAMENTALES
-Téléchargement des prix et des fondamentaux...
-Capital final   : $10,000.00
-Rendement Absolu: +0.00%
-Max Drawdown    : -0.00%
-Graphique sauvegardé : C:\Users\Elrik\.gemini\antigravity\brain\3bd380e5-0c43-4284-9645-00b7bc827801\mega_fundamentals_equity_curve.png

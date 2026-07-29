@@ -271,7 +271,7 @@ if __name__ == '__main__':
     plt.ylabel('Valeur du Portefeuille ($)', fontsize=12)
     plt.grid(True, linestyle='--', alpha=0.7)
     plt.axhline(10000, color='black', linestyle='-', linewidth=1)
-    artifact_path = r'C:\Users\Elrik\.gemini\antigravity\brain\3bd380e5-0c43-4284-9645-00b7bc827801\metalabeling_equity_curve.png'
+    artifact_path = r'C:\Users\Elrik\.gemini\antigravity\brain\bf6b3cb9-68b0-4eeb-95b2-913e35e3097a\metalabeling_equity_curve.png'
     plt.tight_layout()
     plt.savefig(artifact_path, dpi=300)
     print(f"Graphique sauvegardé : {artifact_path}")

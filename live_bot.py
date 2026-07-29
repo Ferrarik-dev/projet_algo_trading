@@ -146,22 +146,41 @@ def generate_todays_signals():
         all_features_train[ticker] = prepare_features(df, vix_df, spy_df, for_prediction=False)
         all_features_predict[ticker] = prepare_features(df, vix_df, spy_df, for_prediction=True)
 
-    print("ENTRAINEMENT DU MODELE LIGHTGBM (sans look-ahead bias)...")
-    X_train_list, y_train_list = [], []
+    print("ENTRAINEMENT DU MODELE LIGHTGBM ET META-MODELE (sans look-ahead bias)...")
+    X_train_list, y_train_list, meta_features_list = [], [], []
     
     for ticker, df in all_features_train.items():
         # Retrait des 5 derniers jours pour eviter la triche sur le Target_5d
         df_hist = df.iloc[:-5] 
         X_train_list.append(df_hist[FEATURES_LIST])
         y_train_list.append(df_hist['Target_5d'])
+        meta_features_list.append(df_hist[['Vol_21d', 'VIX', 'Sector_RS']])
         
     X_train = pd.concat(X_train_list)
     y_train = pd.concat(y_train_list)
+    
+    X_train_sorted = X_train.sort_index()
+    y_train_sorted = y_train.loc[X_train_sorted.index]
+    meta_features_sorted = pd.concat(meta_features_list).loc[X_train_sorted.index]
     
     model = lgb.LGBMRegressor(
         n_estimators=100, learning_rate=0.05, max_depth=5,
         num_leaves=31, subsample=0.8, random_state=42, n_jobs=-1
     )
+    
+    from sklearn.model_selection import TimeSeriesSplit, cross_val_predict
+    from sklearn.ensemble import RandomForestClassifier
+    
+    cv = TimeSeriesSplit(n_splits=5)
+    primary_preds = cross_val_predict(model, X_train_sorted, y_train_sorted, cv=cv, n_jobs=-1)
+    
+    X_meta_train = meta_features_sorted.copy()
+    X_meta_train['Primary_Pred'] = primary_preds
+    y_meta_train = (y_train_sorted > 0).astype(int)
+    
+    meta_model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42, n_jobs=-1)
+    meta_model.fit(X_meta_train, y_meta_train)
+    
     model.fit(X_train, y_train)
     
     print("GENERATION DES PREDICTIONS POUR AUJOURD'HUI...")
@@ -177,12 +196,22 @@ def generate_todays_signals():
         change_pct = ((last_close / prev_close) - 1) * 100
         
         pred_return = 0
+        meta_prob = 0.0
         if not row[FEATURES_LIST].isnull().any():
             X_today = pd.DataFrame([row[FEATURES_LIST]])
-            pred_return = model.predict(X_today)[0]
+            pred_return = float(model.predict(X_today)[0])
             
             if pred_return > 0: # On ne s'interesse qu'aux actions prevues a la hausse pour le Top 3
-                predictions.append((ticker, pred_return))
+                X_meta_today = pd.DataFrame([{
+                    'Vol_21d': row['Vol_21d'],
+                    'VIX': row['VIX'],
+                    'Sector_RS': row['Sector_RS'],
+                    'Primary_Pred': pred_return
+                }])
+                meta_prob = float(meta_model.predict_proba(X_meta_today)[0][1])
+                
+                if meta_prob >= 0.55:
+                    predictions.append((ticker, pred_return, meta_prob))
                 
         full_universe_analysis.append({
             'ticker': ticker,
@@ -191,7 +220,8 @@ def generate_todays_signals():
             'rsi': float(row['RSI_14']) if not pd.isna(row['RSI_14']) else 0.0,
             'macd': float(row['MACD']) if not pd.isna(row['MACD']) else 0.0,
             'volatility': float(row['Vol_21d'] * 100) if not pd.isna(row['Vol_21d']) else 0.0,
-            'pred_return': float(pred_return * 100)
+            'pred_return': float(pred_return * 100),
+            'meta_prob': float(meta_prob * 100)
         })
                 
     # Classement
@@ -207,7 +237,7 @@ def generate_todays_signals():
     if not top_picks:
         print("Aucun signal d'achat interessant aujourd'hui.")
     else:
-        for rank, (ticker, pred) in enumerate(top_picks, 1):
+        for rank, (ticker, pred, meta_prob) in enumerate(top_picks, 1):
             
             # NLP Scoring
             stock = yf.Ticker(ticker)
@@ -241,6 +271,7 @@ def generate_todays_signals():
             top_picks_details.append({
                 'ticker': ticker,
                 'pred_return': pred,
+                'meta_prob': meta_prob,
                 'nlp_score': avg_score,
                 'nlp_alert': nlp_alert
             })
@@ -365,10 +396,14 @@ def execute_live_orders(top_picks_details, trade_today=True):
             if len(new_assets) > 0:
                 # On utilise le account reactualise
                 account_fresh = client.get_account()
-                buying_power = float(account_fresh.buying_power)
-                budget_per_asset = (buying_power * 0.95) / len(new_assets)
+                equity = float(account_fresh.portfolio_value)
+                
+                # Objectif de levier strict : x1.95 maximum pour eviter l'Appel de Marge de nuit
+                target_leverage = 1.95
+                budget_per_asset = (equity * target_leverage) / TOP_N
                 budget_per_asset = round(budget_per_asset, 2)
-                print(f"Budget alloue par NOUVEL actif : {budget_per_asset} $")
+                
+                print(f"Budget alloue par NOUVEL actif : {budget_per_asset} $ (Basé sur un Levier x{target_leverage})")
                 
                 for symbol in new_assets:
                     print(f"Achat de {symbol}")
@@ -429,12 +464,14 @@ def execute_live_orders(top_picks_details, trade_today=True):
             # Injection pour l'export JSON
             pick['price'] = price
             pick['pred_return'] = pred * 100
+            pick['meta_prob'] = meta_prob * 100
             pick['unrealized_pl'] = unrealized_pl
             pick['portfolio_pct'] = (val / initial_balance) * 100 if initial_balance > 0 else 0
             
             telegram_msg += (
                 f"#{rank} *{ticker}*\n"
                 f"   🔸 Rendement 5J prevu : +{pred*100:.2f}%\n"
+                f"   🛡️ Confiance Meta-IA : {meta_prob*100:.1f}%\n"
                 f"   🔸 Score Media : {nlp_alert} ({nlp_score:.2f})\n"
                 f"   🔸 Montant investi : {val:,.2f} $\n"
                 f"   🔸 Prix de l'action : {price:,.2f} $\n\n"
