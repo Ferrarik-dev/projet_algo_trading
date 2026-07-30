@@ -494,14 +494,14 @@ def execute_live_orders(top_picks_details, trade_today=True):
             # Injection pour l'export JSON
             pick['price'] = price
             pick['pred_return'] = pred * 100
-            pick['meta_prob'] = meta_prob * 100
+            pick['meta_prob'] = pick['meta_prob'] * 100
             pick['unrealized_pl'] = unrealized_pl
             pick['portfolio_pct'] = (val / initial_balance) * 100 if initial_balance > 0 else 0
             
             telegram_msg += (
                 f"#{rank} *{ticker}*\n"
                 f"   🔸 Rendement 5J prevu : +{pred*100:.2f}%\n"
-                f"   🛡️ Confiance Meta-IA : {meta_prob*100:.1f}%\n"
+                f"   🛡️ Confiance Meta-IA : {pick['meta_prob']:.1f}%\n"
                 f"   🔸 Score Media : {nlp_alert} ({nlp_score:.2f})\n"
                 f"   🔸 Montant investi : {val:,.2f} $\n"
                 f"   🔸 Prix de l'action : {price:,.2f} $\n\n"
