@@ -177,7 +177,7 @@ def generate_todays_signals():
     
     model = lgb.LGBMRegressor(
         n_estimators=100, learning_rate=0.05, max_depth=5,
-        num_leaves=31, subsample=0.8, random_state=42, n_jobs=-1
+        num_leaves=31, subsample=0.8, random_state=42, n_jobs=1, verbose=-1
     )
     
     from sklearn.model_selection import TimeSeriesSplit
@@ -194,7 +194,7 @@ def generate_todays_signals():
     for train_idx, test_idx in cv.split(X_np):
         fold_model = lgb.LGBMRegressor(
             n_estimators=100, learning_rate=0.05, max_depth=5,
-            num_leaves=31, subsample=0.8, random_state=42, n_jobs=-1, verbose=-1
+            num_leaves=31, subsample=0.8, random_state=42, n_jobs=1, verbose=-1
         )
         fold_model.fit(X_np[train_idx], y_np[train_idx])
         primary_preds[test_idx] = fold_model.predict(X_np[test_idx])
@@ -208,7 +208,7 @@ def generate_todays_signals():
     X_meta_train['Primary_Pred'] = primary_preds
     y_meta_train = (y_train_sorted > 0).astype(int)
     
-    meta_model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42, n_jobs=-1)
+    meta_model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42, n_jobs=1)
     meta_model.fit(X_meta_train.values, y_meta_train.values)
     
     model.fit(X_train, y_train)
