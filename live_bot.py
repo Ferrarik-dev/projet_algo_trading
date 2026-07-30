@@ -430,10 +430,19 @@ def execute_live_orders(top_picks_details, trade_today=True):
                 
                 # Objectif de levier strict : x1.95 maximum pour eviter l'Appel de Marge de nuit
                 target_leverage = 1.95
-                budget_per_asset = (equity * target_leverage) / TOP_N
+                total_budget = equity * target_leverage
+                
+                # Soustraire la valeur des positions GARDEES (deja en portefeuille et toujours dans le Top 3)
+                kept_positions = client.get_all_positions()
+                kept_value = sum(float(p.market_value) for p in kept_positions if p.symbol in alpaca_buy_signals)
+                
+                remaining_budget = total_budget - kept_value
+                budget_per_asset = max(remaining_budget / len(new_assets), 0)
                 budget_per_asset = round(budget_per_asset, 2)
                 
-                print(f"Budget alloue par NOUVEL actif : {budget_per_asset} $ (Basé sur un Levier x{target_leverage})")
+                print(f"Budget total vise : {total_budget:,.2f} $ (Levier x{target_leverage})")
+                print(f"Valeur deja investie (gardee) : {kept_value:,.2f} $")
+                print(f"Budget alloue par NOUVEL actif : {budget_per_asset} $")
                 
                 for symbol in new_assets:
                     print(f"Achat de {symbol}")
