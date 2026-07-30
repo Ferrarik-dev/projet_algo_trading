@@ -588,7 +588,11 @@ if __name__ == '__main__':
     except Exception:
         last_trading_day = -1
         
-    is_monday = (last_trading_day == 0)
+    # === FORCE TRADE : Mettre True pour forcer l'achat MAINTENANT (1 seule fois) ===
+    # Remettre a False apres la premiere execution reussie
+    FORCE_TRADE = True
+    
+    is_monday = (last_trading_day == 0) or FORCE_TRADE
     
     top_picks_details, full_universe_analysis = generate_todays_signals()
     account_info = execute_live_orders(top_picks_details, trade_today=is_monday)
