@@ -184,14 +184,15 @@ def generate_todays_signals():
     from sklearn.ensemble import RandomForestClassifier
     
     cv = TimeSeriesSplit(n_splits=5)
-    primary_preds = cross_val_predict(model, X_train_sorted, y_train_sorted, cv=cv, n_jobs=-1)
+    # .values convertit en NumPy pur pour eliminer les index dupliques qui cassent TimeSeriesSplit
+    primary_preds = cross_val_predict(model, X_train_sorted.values, y_train_sorted.values, cv=cv, n_jobs=-1)
     
     X_meta_train = meta_features_sorted.copy()
     X_meta_train['Primary_Pred'] = primary_preds
     y_meta_train = (y_train_sorted > 0).astype(int)
     
     meta_model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42, n_jobs=-1)
-    meta_model.fit(X_meta_train, y_meta_train)
+    meta_model.fit(X_meta_train.values, y_meta_train.values)
     
     model.fit(X_train, y_train)
     
