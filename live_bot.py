@@ -409,56 +409,88 @@ def execute_live_orders(top_picks_details, trade_today=True):
         print("--- REBALANCEMENT SUSPENDU ---")
         print("La derniere session n'etait pas un Lundi. Mise a jour du Dashboard uniquement.")
     else:
-        # 2. Vendre ce qui n'a plus de signal
+        # --- SYSTEME DE REBALANCEMENT COMPLET ---
+        account_fresh = client.get_account()
+        equity = float(account_fresh.portfolio_value)
+        
+        target_leverage = 1.95
+        total_budget = equity * target_leverage
+        
+        if len(alpaca_buy_signals) > 0:
+            target_per_asset = total_budget / len(alpaca_buy_signals)
+        else:
+            target_per_asset = 0
+            
+        print(f"Equity : {equity:,.2f} $ | Budget total (x{target_leverage}) : {total_budget:,.2f} $")
+        print(f"Cible par actif : {target_per_asset:,.2f} $ ({len(alpaca_buy_signals)} actifs)")
+        
+        # 2a. Vendre ce qui n'a plus de signal (fermer entierement)
         for symbol in current_holdings.keys():
             if symbol not in alpaca_buy_signals:
-                print(f"Vente de {symbol} (Sorti du Top-3)")
+                print(f"Vente TOTALE de {symbol} (Sorti du Top-3)")
                 try:
                     client.close_position(symbol)
                 except Exception as e:
                     print(f"Erreur a la revente de {symbol} : {e}")
-            
-    # 3. Acheter les nouveaux signaux
-    if trade_today:
-        if len(alpaca_buy_signals) > 0:
-            new_assets = [s for s in alpaca_buy_signals if s not in current_holdings]
-            
-            if len(new_assets) > 0:
-                # On utilise le account reactualise
-                account_fresh = client.get_account()
-                equity = float(account_fresh.portfolio_value)
+        
+        # 2b. Rebalancer les positions GARDEES (reduire si trop grosses)
+        import time
+        time.sleep(2)  # Laisser le temps aux ordres de vente de s'executer
+        
+        current_positions = client.get_all_positions()
+        current_pos_map = {p.symbol: float(p.market_value) for p in current_positions}
+        
+        for symbol in list(current_pos_map.keys()):
+            if symbol in alpaca_buy_signals:
+                current_val = current_pos_map[symbol]
+                diff = current_val - target_per_asset
                 
-                # Objectif de levier strict : x1.95 maximum pour eviter l'Appel de Marge de nuit
-                target_leverage = 1.95
-                total_budget = equity * target_leverage
-                
-                # Soustraire la valeur des positions GARDEES (deja en portefeuille et toujours dans le Top 3)
-                kept_positions = client.get_all_positions()
-                kept_value = sum(float(p.market_value) for p in kept_positions if p.symbol in alpaca_buy_signals)
-                
-                remaining_budget = total_budget - kept_value
-                budget_per_asset = max(remaining_budget / len(new_assets), 0)
-                budget_per_asset = round(budget_per_asset, 2)
-                
-                print(f"Budget total vise : {total_budget:,.2f} $ (Levier x{target_leverage})")
-                print(f"Valeur deja investie (gardee) : {kept_value:,.2f} $")
-                print(f"Budget alloue par NOUVEL actif : {budget_per_asset} $")
-                
-                for symbol in new_assets:
-                    print(f"Achat de {symbol}")
+                if diff > 100:  # Position trop grosse de plus de 100$ → vendre l'excedent
+                    sell_amount = round(diff, 2)
+                    print(f"Rebalancement de {symbol} : {current_val:,.2f}$ -> {target_per_asset:,.2f}$ (Vente de {sell_amount:,.2f}$)")
                     try:
                         req = MarketOrderRequest(
                             symbol=symbol,
-                            notional=budget_per_asset,
+                            notional=sell_amount,
+                            side=OrderSide.SELL,
+                            time_in_force=TimeInForce.DAY
+                        )
+                        client.submit_order(req)
+                    except Exception as e:
+                        print(f"Erreur rebalancement de {symbol} : {e}")
+                else:
+                    print(f"{symbol} : {current_val:,.2f}$ (OK, proche de la cible {target_per_asset:,.2f}$)")
+        
+        # 2c. Attendre que les ventes liberent du capital
+        time.sleep(3)
+        
+        # 3. Acheter les NOUVEAUX actifs
+        new_assets = [s for s in alpaca_buy_signals if s not in current_pos_map]
+        
+        if len(new_assets) > 0:
+            account_fresh2 = client.get_account()
+            buying_power_available = float(account_fresh2.buying_power)
+            budget_per_new = min(target_per_asset, buying_power_available / len(new_assets)) if len(new_assets) > 0 else 0
+            budget_per_new = round(budget_per_new, 2)
+            
+            for symbol in new_assets:
+                if budget_per_new > 1:
+                    print(f"Achat de {symbol} pour {budget_per_new:,.2f} $")
+                    try:
+                        req = MarketOrderRequest(
+                            symbol=symbol,
+                            notional=budget_per_new,
                             side=OrderSide.BUY,
                             time_in_force=TimeInForce.DAY
                         )
                         client.submit_order(req)
-                        print(f" -> Ordre execute : {budget_per_asset:.2f} $ de {symbol}")
+                        print(f" -> Ordre execute : {budget_per_new:.2f} $ de {symbol}")
                     except Exception as e:
                         print(f"Erreur lors de l'achat de {symbol} : {e}")
-            else:
-                print("Tous les actifs du Top-3 sont deja en portefeuille. Aucun nouvel achat necessaire.")
+                else:
+                    print(f"Budget insuffisant pour acheter {symbol} ({budget_per_new}$)")
+        elif len(alpaca_buy_signals) > 0:
+            print("Tous les actifs du Top-3 sont deja en portefeuille et rebalances.")
         else:
             print("Aucun signal d'achat aujourd'hui. L'IA reste en securite (Cash).")
 
