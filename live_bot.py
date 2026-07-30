@@ -180,12 +180,29 @@ def generate_todays_signals():
         num_leaves=31, subsample=0.8, random_state=42, n_jobs=-1
     )
     
-    from sklearn.model_selection import TimeSeriesSplit, cross_val_predict
+    from sklearn.model_selection import TimeSeriesSplit
     from sklearn.ensemble import RandomForestClassifier
     
+    # Construction manuelle des predictions out-of-sample (fold par fold)
+    # cross_val_predict ne fonctionne pas avec TimeSeriesSplit car ce n'est pas une partition
     cv = TimeSeriesSplit(n_splits=5)
-    # .values convertit en NumPy pur pour eliminer les index dupliques qui cassent TimeSeriesSplit
-    primary_preds = cross_val_predict(model, X_train_sorted.values, y_train_sorted.values, cv=cv, n_jobs=-1)
+    X_np = X_train_sorted.values
+    y_np = y_train_sorted.values
+    
+    primary_preds = np.full(len(y_np), np.nan)
+    
+    for train_idx, test_idx in cv.split(X_np):
+        fold_model = lgb.LGBMRegressor(
+            n_estimators=100, learning_rate=0.05, max_depth=5,
+            num_leaves=31, subsample=0.8, random_state=42, n_jobs=-1, verbose=-1
+        )
+        fold_model.fit(X_np[train_idx], y_np[train_idx])
+        primary_preds[test_idx] = fold_model.predict(X_np[test_idx])
+    
+    # Les echantillons du premier bloc (jamais testes) recoivent une prediction in-sample du dernier fold
+    nan_mask = np.isnan(primary_preds)
+    if nan_mask.any():
+        primary_preds[nan_mask] = fold_model.predict(X_np[nan_mask])
     
     X_meta_train = meta_features_sorted.copy()
     X_meta_train['Primary_Pred'] = primary_preds
