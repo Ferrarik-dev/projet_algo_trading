@@ -631,7 +631,7 @@ if __name__ == '__main__':
         
     # === FORCE TRADE : Mettre True pour forcer l'achat MAINTENANT (1 seule fois) ===
     # Remettre a False apres la premiere execution reussie
-    FORCE_TRADE = True
+    FORCE_TRADE = False
     
     is_monday = (last_trading_day == 0) or FORCE_TRADE
     
